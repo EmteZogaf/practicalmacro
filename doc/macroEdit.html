@@ -1,0 +1,26 @@
+<html>
+From the edit dialog, you can:<br>
+<ul>reorder commands in the macro</ul>
+<ul>remove commands</ul>
+<ul>add new commands</ul>
+<ul>edit commands that have data associated with them (ex. the Find command).</ul>
+<br>The Edit dialog also allows you to add a new macro id to a command that didn't previously have an associated id (thus turning it into a persistent command), or alter (or remove) the id of an existing command.
+<br>Adding new commands to the macro requires that you have some knowledge of the commands.  There is a filter above the <bold>Available Commands</bold> list that defaults to showing only edit commands (based on looking at categories).  Some commands are not appropriate to a macro, but it's impossible for me to tell what they are, so you may have to experiment.
+<h3>Special macro helper commands</h3>
+<ul>Mark selection start - set a 'mark' at the current selection start, or at the caret pos if no selection</ul>
+<ul>Mark selection end - set a 'mark' at the current selection end, or at the caret pos if no selection</ul>
+<ul>Move cursor to mark - Set the editor cursor to the current mark position</ul>
+<ul>Insert string - this is the workhorse command used to add text. Can contain carriage returns.</ul>
+<ul>Find - perform various kinds of text searching</ul>
+<ul>Styled Text commands - These are commands I've added to the system since they aren't commands by default.  Actions like "move cursor right" are supported by the StyledText widget but aren't mapped as key bindings.</ul>
+<ul>Macro script - You can write whatever scripts you'd like using beanshell.  I pass in several variables for the editor that should be useful.</ul>
+<br>
+The Mark commands are provided as a way to maintain some state while other operations are performed without requiring scripting.  
+For example, to comment a selected area, you could record a sequence of commands like:
+<ol>mark selection start</ol>
+<ol>move cursor right (puts cursor at end of selection</ol>
+<ol>insert string "*/"</ol>
+<ol>move cursor to mark</ol>
+<ol>insert string "/*"</ol>
+
+</html>

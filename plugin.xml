@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension-point id="xmlCommandHandlers" name="XMLCommandHandlers" schema="schema/xmlCommandHandlers.exsd"/>
+   <extension-point id="defineMacro" name="Define a macro" schema="schema/defineMacro.exsd"/>
+   <extension-point id="scriptingSupport" name="Macro Scripting Support" schema="schema/scriptingSupport.exsd"/>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="practicallymacro.preferences.Initializer">
+      </initializer>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.actionSets">
+      <actionSet
+            id="com.none.playActionSet"
+            label="EditorMacros.PlayActionSet"
+            visible="true">
+         <action
+               class="practicallymacro.actions.PlayDropdownAction"
+               definitionId="practicallymacro.actions.playLastMacro"
+               icon="icons/play.gif"
+               id="practicallymacro.actions.playMacroAction"
+               label="&amp;Play Macro"
+               style="pulldown"
+               toolbarPath="Normal/additions"
+               tooltip="Play Macro">
+            <enablement>
+               <objectClass name="org.eclipse.jface.text.ITextSelection"/>
+            </enablement>
+          </action>
+         <action
+               class="practicallymacro.actions.RecordCommandAction"
+               definitionId="practicallymacro.actions.recordMacro"
+               icon="icons/record.gif"
+               id="practicallymacro.actions.recordMacroAction"
+               label="&amp;Record Macro"
+               retarget="false"
+               state="false"
+               style="push"
+               toolbarPath="Normal/additions"
+               tooltip="Record Macro">
+            <enablement>
+               <objectClass name="org.eclipse.jface.text.ITextSelection"/>
+            </enablement>
+         </action>
+      </actionSet>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            categoryId="practicallymacro.category.utility.command"
+            defaultHandler="practicallymacro.commands.PlayHandler"
+            description="Play the last recorded macro"
+            id="practicallymacro.actions.playLastMacro"
+            name="Play last macro"/>
+      <command
+            categoryId="practicallymacro.category.utility.command"
+            defaultHandler="practicallymacro.commands.RecordHandler"
+            description="Record a new macro"
+            id="practicallymacro.actions.recordMacro"
+            name="Record Macro"/>
+      <command
+            categoryId="practicallymacro.category.utility.command"
+            defaultHandler="practicallymacro.commands.PlayCommand"
+            description="Play any defined command"
+            id="practicallymacro.actions.playCommand"
+            name="Play command"/>
+      <command
+            categoryId="practicallymacro.category.utility.command"
+            defaultHandler="practicallymacro.commands.MarkSelectionStart"
+            description="Set the mark at the location of the current selection start."
+            id="practicallymacro.actions.markSelectionStartCommand"
+            name="Mark selection start"/>
+      <command
+            categoryId="practicallymacro.category.utility.command"
+            defaultHandler="practicallymacro.commands.MarkSelectionEnd"
+            description="Set the mark at the location of the current selection end"
+            id="practicallymacro.actions.markSelectionEndCommand"
+            name="Mark selection end"/>
+      <command
+            categoryId="practicallymacro.category.utility.command"
+            defaultHandler="practicallymacro.commands.MoveCursorToMark"
+            description="Set the cursor at the last mark location"
+            id="practicallymacro.actions.setCursorAtMarkCommand"
+            name="Set cursor at mark"/>
+      <category
+            description="Editor macros defined by the user"
+            id="practicallymacro.category.usermacros"
+            name="User defined editor macros">
+      </category>
+      <category
+            description="Utiliity commands for recording editor macros"
+            id="practicallymacro.category.utility.command"
+            name="PracticallyMacro utility command">
+      </category>
+      <command
+            categoryId="practicallymacro.category.utility.command"
+            defaultHandler="practicallymacro.commands.ExtendSelectionToMark"
+            description="Extend the current selection to the current mark position, or the current cursor position if there is no mark.  If there is no selection, use the current cursor position."
+            id="practicallymacro.actions.extendSelectionToMarkCommand"
+            name="Extend selection to mark">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="practicallymacro.actions.playLastMacro"
+            contextId="org.eclipse.ui.textEditorScope"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+M3+P"/>
+      <key
+            commandId="practicallymacro.actions.recordMacro"
+            contextId="org.eclipse.ui.textEditorScope"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+M3+R"/>
+   </extension>
+   <extension
+         point="PracticallyMacro.xmlCommandHandlers">
+      <XMLCommandHandler class="practicallymacro.commands.EclipseCommand" type="EclipseCommand"/>
+      <XMLCommandHandler class="practicallymacro.commands.InsertStringCommand" type="InsertStringCommand"/>
+      <XMLCommandHandler class="practicallymacro.commands.MacroScriptCommand" type="MacroScriptCommand"/>
+      <XMLCommandHandler class="practicallymacro.commands.StyledTextCommand" type="styledTextCommand"/>
+      <XMLCommandHandler class="practicallymacro.commands.FindCommand" type="MacroFindCommand"/>
+      <XMLCommandHandler class="practicallymacro.commands.KeystrokeCommand" type="MacroKeystrokeCommand"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            category="practicallymacro.editormacros.optionsPage"
+            class="practicallymacro.dialogs.MacroDefinitionsPage"
+            id="practicallymacro.editormacros.editingpage"
+            name="Editor Macro Definitions">
+      </page>
+      <page
+            class="practicallymacro.dialogs.OptionsPage"
+            id="practicallymacro.editormacros.optionsPage"
+            name="Practically Macro Options">
+      </page>
+   </extension>
+
+	<extension point="org.eclipse.help.contexts">
+	    <contexts file="helpContexts.xml" />
+	</extension>
+
+</plugin>

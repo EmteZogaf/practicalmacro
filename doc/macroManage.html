@@ -1,0 +1,18 @@
+<html>
+
+<h1>Creating new macros</h2>
+Click the <bold>New</bold> button to create a new macro from scratch.
+<h1>Deleting Macros</h2>
+Select one or more macros to delete and click the delete button.  Macros that are mapped to keystrokes will fail to delete, as will macro contributed by plug-ins.  To delete a macro mapped to a key, you must first remove the key binding.
+<h1>Editing Macros</h2>
+Click the <bold>Edit</bold> button to edit an existing macro.  Macros contributed from plug-ins cannot be edited.
+<h1>Copying Macros</h2>
+To copy one or more macros, select them and click the <bold>Copy</bold> button.  Each macro will be copied and added to the list with a new name.  This is useful if you need another similar command, or if you want to see the contents of a macro contributed from a plug-in.
+<h1>Sharing macros</h2>
+Click the <bold>Export</bold> or <bold>Import</bold> buttons to export or import macros.  Macros exported to a file can be imported via the import dialog into another eclipse (with the Practically Macro plugins installed, as well as any required plugins/commands).  Macros with ids that already exist in the current Eclipse will be skipped (i.e. they will not replace the current command with that ID).  Also, from the export dialog you can copy the XML from the text box and put that directly into a plugin.xml definition with the following extension point:
+<br><pre>   &lt;extension point="PracticallyMacro.defineMacro"&gt;
+      include the text from the export page here
+   &lt;/extension&gt;</pre><br>
+When exporting to a file, you can export one macro or a set of macros to the same file.  If a macro uses other macros you have defined, you should export them all together.
+
+</html>

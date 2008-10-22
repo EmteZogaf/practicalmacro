@@ -1,0 +1,45 @@
+<html>
+<h1>Practically Macro</h1>
+Practically Macro is an attempt to add simple editor scripting to the Eclipse platform; it is not an attempt at scripting the Eclipse platform in general.  I believe that editor scripting, while similar to general scripting, is fundamentally a different problem.  The intent of this plug-in is to enable users to record/create editor macros in a lightweight manner that can be used temporarily or easily shared with others.  I have tried to do this in a way that uses public API and public assumptions, and I've mostly been able to do so.  In my opinion, every character entered or navigation button pressed should generate a command that can be recorded.  However, Eclipse doesn't generate commands for everything, so I've done the best I can.
+
+<h2>Requirements</h2>
+Eclipse 3.4 or greater; will not run correctly at 3.3.  Requires the workbench.  Shouldn't require jdt.  
+
+<h2>Recording a macro</h2>
+Start recording a macro by typing Alt+Ctrl+R or clicking the "Record Macro" button on the main toolbar.  The Record button is only enabled when a text editor has input focus.  Once record mode is invoked, the record button will appear depressed.  
+Actions that will be captured by recording a macro are Eclipse commands and keystrokes.  Mouse activity is not captured and should be avoided in the editor window.
+Once you are done recording a macro, click the "Record Macro" button again.  If you have recorded any macro contents, a Save dialog will pop up allowing you to supply a name/id/description for the macro.  You can cancel if you don't want to keep the macro.  To allow the macro to be persisted across Eclipse invocations or to allow mapping the command to a keystroke, you must supply an ID.  If you only supply a name, the macro can be used during the Eclipse session only.  You can modify/add an ID later in the session. 
+
+<h2>Playing a macro</h2>
+To play a macro, use the drop down menu on the "Play Macro" button.  You can use the "Play command..." button to execute any Eclipse command or macro that is already defined.  If there are user macros defined with ids, they will show up in a menu called "Macros".  Only the last few will be available, and they will be ordered by last used time.  If there are commands that do not have associated ids, they will show up in the submenu named "Temporary Macros", ordered by last used time.  After you have execute a macro, clicking the Play button will execute the last executed macro.
+
+<h2>Gotchas</h2>
+This plug-in is built on top of the Eclipse platform. Unfortunately, the Eclipse command structure is not designed with macro recording in mind.  What this means is that not all commands are recordable, and some behavior may be a little sketchy.  However, you can edit a macro after recording, so you should be able to patch up behavior that isn't desirable.  The lack of an official Eclipse strategy means that there is no guide to what commands should be recordable, so I don't impose any artificial limitations.<br>
+Here are some types of actions that make sense to record as part of a macro:<br>
+<ul>typing characters (see note below)</ul>
+<ul>navigation characters (ex. arrows, page down)</ul>
+<ul>find dialog (I've supplied my own since the standard dialog isn't public)</ul>
+<ul>incremental find (with some hacking)</ul>
+<ul>previously recorded macros</ul>
+<ul>other commands that don't pop up dialogs (ex. file save, find next, organize imports, toggle insert mode)</ul>
+<br> 
+Here are some types of actions that almost certainly won't work correctly:<br>
+<ul>Commands that bring up dialogs (ex. Go to line)</ul>
+<ul>Wizards and other dialogs (ex. Open File)</ul>
+<ul>ctrl+space intellisense</ul>
+<ul>invoking code templates like "foreach"</ul>
+
+<h3>Special notes</h3>
+Certain keystrokes are handled specially by the language editor.  However, these editors don't generate commands associated with their behavior, so they are difficult to interpret.  For example, in a Java file, if you type in a '<', a '>' will be inserted and the cursor will be placed between the two symbols.  Also, the editor is put into a special edit mode so that if you backspace, both characters are deleted.  However, there is no set of commands generated that accomplishes these tasks.  Instead, the editor document captures the initial '<' via a VerifyKeyListener and then does the inserts and sets the mode directly on the document.  Therefore, if you have this setting ("Automatically Close") turned on and type a '<', then the macro will not have any commands corresponding to some of these operations.  You can edit the macro afterward, but that may be inconvenient.  I've added another mode on the Options page that records keys as raw key events and plays them back.  This preserves the behavior of special characters like '<', but is more difficult to edit and may not be sharable with users on other platforms.
+<br><bold>In general, I recommend running in 'Command' mode and 'typing through' special keystroke modes while recording a macro.</bold>
+
+<h2>Editing macros</h2>
+You can edit macros you have recorded via the Window->Preferences->PracticallyMacro Options->Editor Macro Definitions page.  From this page, you can delete existing macros or edit macros.  Select a macro and click the Edit... button.  From the edit dialog, you can reorder commands in the macro, remove commands, add new commands, and edit commands that have data associated with them (ex. the Find command).
+The Edit dialog also allows you to add a new macro id to a command that didn't previously have an associated id (thus turning it into a persistent command), or alter the id of an existing command.
+
+<h2>Sharing macros</h2>
+From the Editor Macro Definitions page you can export or import macros.  Macros exported to a file can be imported via the import dialog into another eclipse (with the Practically Macro plugins installed, as well as any required plugins/commands).  
+
+<h2>Scripting</h2>
+Macro scripting is provided by plugins via an extension point.  See the help for different script types on pref or edit pages for those plugins.  There is no innate scripting provided by the base Practically Macro plugin, but there is a default beanshell plugin paired with the main plugin.  
+</html>

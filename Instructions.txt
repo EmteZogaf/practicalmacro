@@ -1,0 +1,77 @@
+---how to record
+---how to play
+---gotchas
+----commands you can't use
+----recording modes 
+---sharing
+
+Practically Macro
+================================================================================
+Practically Macro is an attempt to add simple editor scripting to the Eclipse platform; it is not an attempt at scripting the Eclipse platform in general.  I believe that editor scripting, while similar to general scripting, is fundamentally a different problem.  The intent of this plug-in is to enable users to record/create editor macros in a lightweight manner that can be used temporarily or easily shared with others.  I have tried to do this in a way that uses public API and public assumptions, and I've mostly been able to do so.  In my opinion, every character entered or navigation button pressed should generate a command that can be recorded.  However, Eclipse doesn't generate commands for everything, so I've done the best I can.
+
+Requirements
+--------------------------------------------------------------------------------
+Eclipse 3.4 or greater; will not run correctly at 3.3.  Requires the workbench.  Shouldn't require jdt.  
+
+Recording a macro
+--------------------------------------------------------------------------------
+Start recording a macro by typing Alt+Ctrl+R or clicking the "Record Macro" button on the main toolbar.  The Record button is only enabled when a text editor has input focus.  Once record mode is invoked, the record button will appear depressed.  
+Actions that will be captured by recording a macro are Eclipse commands and keystrokes.  Mouse activity is not captured and should be avoided in the editor window.
+Once you are done recording a macro, click the "Record Macro" button again.  If you have recorded any macro contents, a Save dialog will pop up allowing you to supply a name/id/description for the macro.  You can cancel if you don't want to keep the macro.  To allow the macro to be persisted across Eclipse invocations or to allow mapping the command to a keystroke, you must supply an ID.  If you only supply a name, the macro can be used during the Eclipse session only.  You can modify/add an ID later in the session. 
+
+Playing a macro
+--------------------------------------------------------------------------------
+To play a macro, use the drop down menu on the "Play Macro" button.  You can use the "Play command..." button to execute any Eclipse command or macro that is already defined.  If there are user macros defined with ids, they will show up in a menu called "Macros".  Only the last few will be available, and they will be ordered by last used time.  If there are commands that do not have associated ids, they will show up in the submenu named "Temporary Macros", ordered by last used time.  After you have execute a macro, clicking the Play button will execute the last executed macro.
+
+Gotchas
+-------------------------------------------------------------------------------
+This plug-in is built on top of the Eclipse platform. Unfortunately, the Eclipse command structure is not designed with macro recording in mind.  What this means is that not all commands are recordable, and some behavior may be a little sketchy.  However, you can edit a macro after recording, so you should be able to patch up behavior that isn't desirable.  The lack of an official Eclipse strategy means that there is no guide to what commands should be recordable, so I don't impose any artificial limitations.
+Here are some types of actions that make sense to record as part of a macro:
+1)typing characters (see note below)
+2)navigation characters (ex. arrows, page down)
+3)find dialog (I've supplied my own since the standard dialog isn't public)
+4)incremental find (with some hacking)
+5)previously recorded macros
+6)other commands that don't pop up dialogs (ex. file save, find next, organize imports, toggle insert mode)
+ 
+Here are some types of actions that almost certainly won't work correctly:
+1) Commands that bring up dialogs (ex. Go to line)
+2) Wizards and other dialogs (ex. Open File)
+3) ctrl+space intellisense
+4) invoking code templates like "foreach"
+
+Special notes
+Certain keystrokes are handled specially by the language editor.  However, these editors don't generate commands associated with their behavior, so they are difficult to interpret.  For example, in a Java file, if you type in a '<', a '>' will be inserted and the cursor will be placed between the two symbols.  Also, the editor is put into a special edit mode so that if you backspace, both characters are deleted.  However, there is no set of commands generated that accomplishes these tasks.  Instead, the editor document captures the initial '<' via a VerifyKeyListener and then does the inserts and sets the mode directly on the document.  Therefore, if you have this setting ("Automatically Close") turned on and type a '<', then the macro will not have any commands corresponding to some of these operations.  You can edit the macro afterward, but that may be inconvenient.  I've added another mode on the Options page that records keys as raw key events and plays them back.  This preserves the behavior of special characters like '<', but is more difficult to edit and may not be sharable with users on other platforms.
+
+Editing macros
+------------------------------------------------------------------------------------------
+You can edit macros you have recorded via the Window->Preferences->PracticallyMacro Options->Editor Macro Definitions page.  From this page, you can delete existing macros or edit macros.  Select a macro and click the Edit... button.  From the edit dialog, you can reorder commands in the macro, remove commands, add new commands, and edit commands that have data associated with them (ex. the Find command).
+The Edit dialog also allows you to add a new macro id to a command that didn't previously have an associated id (thus turning it into a persistent command), or alter the id of an existing command.
+
+Sharing macros
+---------------------------------------------------------------------------------------------
+From the Editor Macro Definitions page you can export or import macros.  Macros exported to a file can be imported via the import dialog into another eclipse (with the Practically Macro plugins installed, as well as any required plugins/commands).  Macros with ids that already exist in the current Eclipse will be skipped (i.e. they will not replace the current command with that ID).  Also, from the export dialog you can copy the XML from the text box and put that directly into a plugin.xml definition with the following extension point:
+   <extension point="PracticallyMacro.defineMacro">
+       <include the text from the export page here>
+   </extension>
+
+
+Special macro helper commands
+---------------------------------------------------------------------------------------------
+1)Mark selection start - set a 'mark' at the current selection start, or at the caret pos if no selection
+2)Mark selection end - set a 'mark' at the current selection end, or at the caret pos if no selection
+3)Move cursor to mark - Set the editor cursor to the current mark position
+4)Insert string - this is the workhorse command used to add text. Can contain carriage returns.
+5)Find - perform various kinds of text searching
+6)Styled Text commands - These are commands I've added to the system since they aren't commands by default.  Actions like "move cursor right" are supported by the StyledText widget but aren't mapped as key bindings.
+7)Macro script - You can write whatever scripts you'd like using beanshell.  I pass in several variables for the editor that should be useful.
+
+The Mark commands are provided as a way to maintain some state while other operations are performed without requiring scripting.  
+For example, to comment a selected area, you could record a sequence of commands like:
+a)mark selection start
+b)move cursor right (puts cursor at end of selection
+c)insert string "*/"
+d)move cursor to mark
+e)insert string "/*"
+
+Macro scripting is embryonic and complicated.  There is some help when you are editing the script itself (via "question mark" help).

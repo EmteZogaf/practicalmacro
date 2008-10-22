@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?NLS TYPE="org.eclipse.help.contexts"?>
+  
+  <contexts>
+    <context id="overallHelp">
+      <description>Help for Practically Macro plugin</description>
+      <topic href="doc/overall.html" label="Practically Macro"/>
+    </context>
+    <context id="editDialogHelp">
+      <description>Help for Practically Macro edit dialog</description>
+      <topic href="doc/macroEdit.html" label="Practically Macro macro editing"/>
+    </context>
+    <context id="managingMacrosHelp">
+      <description>Help for Practically Macro edit dialog</description>
+      <topic href="doc/macroManage.html" label="Practically Macro macro management"/>
+    </context>
+  </contexts>
