@@ -3,8 +3,10 @@ package practicallymacro.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.ui.IEditorPart;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -50,6 +52,11 @@ public class EditorMacro {
 	
 	public void run(final IEditorPart editor)
 	{
+		if (editor==null)
+		{
+			MessageDialog.openError(Display.getDefault().getActiveShell(), "Execute macro", "Cannot execute macro: the view with focus is not a text editor.");
+			return;
+		}
 //		StyledText widget=Utilities.getStyledText(editor);
 //		widget.removeListener(MacroManager.Macro_Event, MacroManager.getManager().getMacroRunListener());
 //		widget.addListener(MacroManager.Macro_Event, MacroManager.getManager().getMacroRunListener());
