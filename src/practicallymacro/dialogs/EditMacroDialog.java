@@ -63,6 +63,9 @@ public class EditMacroDialog extends TitleAreaDialog
 	private Button mFilterNonEditorCommands;
 	private Button mFilterNonMacroCommands;
 	
+	private boolean mCanChangeID;
+	private boolean mReadOnly;
+	
 	List<IMacroCommand> mCommands;
 	
 	private TableColumn mAvailNameColumn;
@@ -74,12 +77,14 @@ public class EditMacroDialog extends TitleAreaDialog
 	
 	private Set<String> mUsedIDs;
 	
-	public EditMacroDialog(Shell shell, EditorMacro existingMacro, Set<String> usedIDs)
+	public EditMacroDialog(Shell shell, EditorMacro existingMacro, Set<String> usedIDs, boolean canChangeID, boolean viewOnly)
 	{
 		super(shell);
 		mExistingMacro=existingMacro;
 		mUsedIDs=usedIDs;
 		mCommands=new ArrayList<IMacroCommand>();
+		mCanChangeID=canChangeID;
+		mReadOnly=viewOnly;
 		if (mExistingMacro!=null)
 		{
 			//may need to copy?
@@ -375,6 +380,7 @@ public class EditMacroDialog extends TitleAreaDialog
 		mNameText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		if (mExistingMacro!=null)
 			mNameText.setText(mExistingMacro.getName());
+		mNameText.setEditable(!mReadOnly);
 		mNameText.addModifyListener(new ModifyListener()
 		{
 			public void modifyText(ModifyEvent e)
@@ -389,30 +395,12 @@ public class EditMacroDialog extends TitleAreaDialog
 		mIDText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		if (mExistingMacro!=null)
 			mIDText.setText(mExistingMacro.getID());
+		mIDText.setEditable(mCanChangeID && !mReadOnly);
 		mIDText.addModifyListener(new ModifyListener()
 		{
 			public void modifyText(ModifyEvent e)
 			{
-				String currentText=mIDText.getText();
-				boolean isError=false;
-				if (currentText.length()>0)
-				{
-					if (mUsedIDs.contains(currentText) && ((mExistingMacro==null) || !(currentText.equals(mExistingMacro.getID()))))
-					{
-						isError=true;
-					}
-				}
-				
-				if (isError)
-				{
-					setMessage("ID conflicts with another command", IMessageProvider.ERROR);
-					getButton(IDialogConstants.OK_ID).setEnabled(false);
-				}
-				else
-				{
-					setMessage(null);
-					getButton(IDialogConstants.OK_ID).setEnabled(true);
-				}
+				validatePage();
 			}
 		});
 		
@@ -425,10 +413,41 @@ public class EditMacroDialog extends TitleAreaDialog
 		mMacroDescriptionText.setLayoutData(descData);
 		if (mExistingMacro!=null)
 			mMacroDescriptionText.setText(mExistingMacro.getDescription());
-		
+		mMacroDescriptionText.setEditable(!mReadOnly);
 		return comp;
 	}
 	
+	protected void validatePage()
+	{
+		if (mReadOnly)
+		{
+			getButton(IDialogConstants.OK_ID).setEnabled(false);
+			setMessage("This command is not editable", IMessageProvider.WARNING);
+			return;
+		}
+		
+		String currentText=mIDText.getText();
+		boolean isError=false;
+		if (currentText.length()>0)
+		{
+			if (mUsedIDs.contains(currentText) && ((mExistingMacro==null) || !(currentText.equals(mExistingMacro.getID()))))
+			{
+				isError=true;
+			}
+		}
+		
+		if (isError)
+		{
+			setMessage("ID conflicts with another command", IMessageProvider.ERROR);
+			getButton(IDialogConstants.OK_ID).setEnabled(false);
+		}
+		else
+		{
+			setMessage(null);
+			getButton(IDialogConstants.OK_ID).setEnabled(true);
+		}
+	}
+
 	private void updateAvailableCommandTable()
 	{
 		//add all available commands to table; need to add synthethic commands too (or add them as real commands at startup)
@@ -565,15 +584,16 @@ public class EditMacroDialog extends TitleAreaDialog
 				isConfigurable=true;
 			}
 		}
-		mEditButton.setEnabled(isConfigurable);
-		mDeleteButton.setEnabled(selCount>0);
-		mMoveUpButton.setEnabled(selCount==1 && selIndex>0);
-		mMoveDownButton.setEnabled(selCount==1 && selIndex<mCommandTable.getItemCount()-1);
-		mCopyButton.setEnabled(selCount>0);
+		mEditButton.setEnabled(!mReadOnly && isConfigurable);
+		mDeleteButton.setEnabled(!mReadOnly && selCount>0);
+		mMoveUpButton.setEnabled(!mReadOnly && selCount==1 && selIndex>0);
+		mMoveDownButton.setEnabled(!mReadOnly &&  selCount==1 && selIndex<mCommandTable.getItemCount()-1);
+		mCopyButton.setEnabled(!mReadOnly &&  selCount>0);
 		
 		mFilterNonMacroCommands.setEnabled(mFilterNonEditorCommands.getSelection());
 		
-		getButton(IDialogConstants.OK_ID).setEnabled(mNameText.getText().length()>0);
+		getButton(IDialogConstants.OK_ID).setEnabled(!mReadOnly && mNameText.getText().length()>0);
+		validatePage();
 	}
 
 //	@Override
@@ -587,6 +607,8 @@ public class EditMacroDialog extends TitleAreaDialog
 	{
 		//build result macro
 		mResultMacro=new EditorMacro(mCommands, mIDText.getText(), mNameText.getText(), mMacroDescriptionText.getText());
+		if (mExistingMacro!=null)
+			mResultMacro.setSessionID(mExistingMacro.getSessionID());
 		super.okPressed();
 	}
 

@@ -69,10 +69,20 @@ public class MacroManager
 	private List<EditorMacro> mMacroStack;
 	private int mCommandsExecuted;
 	private int mRecordingMark;
+	private String mCurrentMacroState;
+	
+	private static int mUniqueSessionMacroID=1;
+	
+	private boolean mMacroDebugMode;
 	
 	private Map<String, IMacroScriptSupport> mScriptSupportMap; 
 	
 	private static int mNextTempMacroIndex=1;
+	private int mLastUsedMacroSessionID;
+	
+	public static final String State_Idle="MACROSTATE_IDLE";
+	public static final String State_Recording="MACROSTATE_RECORDING";
+	public static final String State_Playing="MACROSTATE_PLAYING";
 	
 	public static final String XML_Macros_Tag="EditorMacros";
 	public static final String XML_Macro_Tag="Macro";
@@ -92,12 +102,22 @@ public class MacroManager
 		mMacroMap=new HashMap<String, EditorMacro>(); //load from preferences
 		mTemporaryMacros=new ArrayList<EditorMacro>();
 		mMacroStack=new ArrayList<EditorMacro>();
-		mScriptSupportMap=new HashMap<String, IMacroScriptSupport>();		
+		mScriptSupportMap=new HashMap<String, IMacroScriptSupport>();
+		mLastUsedMacroSessionID=0;
+		mCurrentMacroState=State_Idle;
+		mMacroDebugMode=false;
 	}
 	
 	public static boolean isNull()
 	{
 		return mManager==null;
+	}
+	
+	public int getNextMacroSessionID()
+	{
+		int id=mUniqueSessionMacroID;
+		mUniqueSessionMacroID++;
+		return id;
 	}
 	
 	public static MacroManager getManager()
@@ -258,6 +278,8 @@ public class MacroManager
 	
 	public void addMacro(EditorMacro macro)
 	{
+		if (macro.getSessionID()<=0)
+			macro.setSessionID(getNextMacroSessionID());
 		if (macro.getID().length()>0)
 		{
 			mMacroMap.put(macro.getID(), macro);
@@ -447,7 +469,12 @@ public class MacroManager
 	
 	public void saveMacros()
 	{
-		String xmlString=persistMacros(mMacroMap.values());
+		List<EditorMacro> filteredMacros=new ArrayList<EditorMacro>();
+		for (EditorMacro macro : mMacroMap.values()) {
+			if (!macro.isContributed())
+				filteredMacros.add(macro);
+		}
+		String xmlString=persistMacros(filteredMacros);
 		if (xmlString!=null)
 		{
     		IPreferenceStore prefStore=Activator.getDefault().getPreferenceStore();
@@ -623,95 +650,6 @@ public class MacroManager
             {
 				addMacro(editorMacro);
 			}
-//        	try
-//        	{
-//	        	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-//	        	DocumentBuilder loader = factory.newDocumentBuilder();
-//	        	Document document = loader.parse(new InputSource(new StringReader(xmlString)));
-//	        	Element macros = document.getDocumentElement();
-//	        	NodeList macroList=macros.getChildNodes();
-//	        	for (int i=0;i<macroList.getLength();i++)
-//	        	{
-//	        		Node macroNode=macroList.item(i);
-//	        		if (!(macroNode instanceof Element))
-//	        			continue;
-//	        		
-//	        		Element macroEl=(Element)macroNode;
-//	        		String name=macroEl.getAttribute(XML_Name_Tag);
-//	        		String id=macroEl.getAttribute(XML_ID_Tag);
-//	        		String timeString=macroEl.getAttribute(XML_LastUsed_Attr);
-//	        		String desc="";
-//	        		NodeList macroChildren=macroNode.getChildNodes();
-//	        		for (int k=0;k<macroChildren.getLength();k++)
-//	        		{
-//	        			Node testNode=macroChildren.item(k);
-//	        			if (testNode.getNodeName().equals(XML_Description_Tag))
-//	        			{
-//	        				desc=testNode.getTextContent();
-//	        				break;
-//	        			}
-//	        		}
-//	        		
-//	        		if (id.length()>0 && name.length()>0)
-//	        		{
-//	        			//construct macro
-//	        			List<IMacroCommand> commands=new ArrayList<IMacroCommand>();
-//	        			
-//		        		for (int k=0;k<macroChildren.getLength();k++)
-//		        		{
-//		        			Node commandNode=macroChildren.item(k);
-//		        			if (commandNode.getNodeName().equals(XML_Command_Tag))
-//		        			{
-//		        				NamedNodeMap commandAttrs=commandNode.getAttributes();
-//			        			Node typeNode=commandAttrs.getNamedItem(XML_CommandType_ATTR);
-//			        			if (typeNode!=null)
-//			        			{
-//			        				String typeString=typeNode.getNodeValue();
-//			        				IMacroCommand macroCommand=mXMLCommandHandlerMap.get(typeString);
-//			        				if (macroCommand!=null)
-//			        				{
-//			        					IMacroCommand newCommand=macroCommand.createFrom((Element)commandNode);
-//			        					commands.add(newCommand);
-//			        				}
-//			        			}
-//		        				
-//		        			}
-//		        		}
-//		        		
-//	        			EditorMacro newMacro=new EditorMacro(commands, id, name, desc);
-//	        			if (timeString.length()>0)
-//	        			{
-//	        				try
-//	        				{
-//	        					newMacro.setLastUse(Long.parseLong(timeString));
-//	        				}
-//	        				catch (NumberFormatException e)
-//	        				{
-//	        					e.printStackTrace();
-//	        				}
-//	        			}
-//		        		
-//		        		addMacro(newMacro);
-//	        		}
-//	        		else
-//	        		{
-//	        			continue;
-//	        		}
-//	        		
-//	        		
-//	        	}
-//	        	
-//        	} catch (ParserConfigurationException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			} catch (SAXException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			} catch (IOException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//        	finally{}
         }
         
         //get macros from extension point
@@ -751,6 +689,21 @@ public class MacroManager
 		}
         
 	}
+	
+	public Map<Integer, EditorMacro> getUniqueMacroMap()
+	{
+		Map<Integer, EditorMacro> map=new HashMap<Integer, EditorMacro>();
+		for (EditorMacro macro : mMacroMap.values())
+		{
+			map.put(macro.getSessionID(), macro);
+		}
+		
+		for (EditorMacro macro : mTemporaryMacros) {
+			map.put(macro.getSessionID(), macro);
+		}
+		
+		return map;
+	}
 
 	public List<EditorMacro> getAllMacros()
 	{
@@ -770,43 +723,40 @@ public class MacroManager
 		return list.subList(0, Math.min(count, list.size()));
 	}
 
-	public void replaceDefinedMacros(List<EditorMacro> newMacros)
+	public void replaceDefinedMacros(Map<Integer, EditorMacro> updatedMacros)
 	{
 		//determine new/deleted/changed commands
 		//new- add them
 		//deleted- undefine them, possibly also attempting to remove key bindings
 		//changed - just define them again.
 		
+		//collect the keys for the current set of macros
+		Set<EditorMacro> currentKeys=new HashSet<EditorMacro>();
+		currentKeys.addAll(mMacroMap.values());
+		
 		List<EditorMacro> newTempMacros=new ArrayList<EditorMacro>();
 		
 		//look for added or changed macros
 		Map<String, EditorMacro> newMacroMap=new HashMap<String, EditorMacro>();
-		for (EditorMacro newMacro : newMacros)
+		for (Map.Entry<Integer, EditorMacro> entry: updatedMacros.entrySet())
 		{
+			EditorMacro newMacro=entry.getValue();
+			
 			if (newMacro.getID().length()==0)
 			{
+				//doesn't matter if macro existed before or not
 				newTempMacros.add(newMacro);
-				continue;
 			}
-			
-			EditorMacro existingMacro=mMacroMap.get(newMacro.getID());
-			if (existingMacro==null)
+			else
 			{
+				//just redefine the macro, which will redefine the command for the id
 				addMacro(newMacro);
+				newMacroMap.put(newMacro.getID(), newMacro);
 			}
-			else 
-			{
-				//just redefine it; I hope that it's not necessary to actually check for differences
-				addMacro(newMacro);
-			}
-			
-			newMacroMap.put(newMacro.getID(), newMacro);
 		}
 		
 		//now, look for deleted macros
 		ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
-		Set<EditorMacro> currentKeys=new HashSet<EditorMacro>();
-		currentKeys.addAll(mMacroMap.values());
 		for (EditorMacro existingMacro : currentKeys)
 		{
 			//see if current map contains the command from the new set.  If not, then we need to delete the command
@@ -829,17 +779,36 @@ public class MacroManager
 			}
 		}
 		
-		EditorMacro lastMacro=Activator.getDefault().getLastMacro();
-		if (lastMacro!=null)
-		{
-			EditorMacro updatedVersion=getMacro(lastMacro.getID());
-			if (updatedVersion!=null)
-			{
-				Activator.getDefault().setLastMacro(updatedVersion);
-			}
-		}
+		//The session id shouldn't have changed.  Will either be valid or invalid, which 
+		//should be okay either way and appropriate if the last used command was deleted.
+//		EditorMacro lastMacro=Activator.getDefault().getLastMacro();
+//		if (lastMacro!=null)
+//		{
+//			EditorMacro updatedVersion=getMacro(lastMacro.getID());
+//			if (updatedVersion!=null)
+//			{
+//				Activator.getDefault().setLastMacro(updatedVersion);
+//			}
+//		}
 
 		mTemporaryMacros=newTempMacros;
+	}
+	
+	public void setLastMacro(EditorMacro macro)
+	{
+		if (macro.getSessionID()>0)
+			mLastUsedMacroSessionID=macro.getSessionID();
+	}
+	
+	public EditorMacro getLastMacro()
+	{
+		if (mLastUsedMacroSessionID>0)
+		{
+			Map<Integer, EditorMacro> map=getUniqueMacroMap();
+			return map.get(mLastUsedMacroSessionID);
+		}
+		
+		return null;
 	}
 
 //	public Listener getMacroRunListener()
@@ -935,4 +904,23 @@ public class MacroManager
 	{
 		return mScriptSupportMap.get(proxyID);
 	}
+	
+	public String getMacroState()
+	{
+		return mCurrentMacroState;
+	}
+
+	public void setMacroState(String newState)
+	{
+		mCurrentMacroState=newState;
+	}
+
+	public boolean isMacroDebugMode() {
+		return mMacroDebugMode;
+	}
+
+	public void setMacroDebugMode(boolean macroDebugMode) {
+		mMacroDebugMode = macroDebugMode;
+	}
+	
 }

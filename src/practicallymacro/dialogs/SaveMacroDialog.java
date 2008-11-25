@@ -19,6 +19,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
@@ -51,7 +53,7 @@ public class SaveMacroDialog extends TitleAreaDialog
 	{
 		getShell().setText("Save recorded macro");
 		Composite comp=new Composite(parent, SWT.None);
-		comp.setLayout(new GridLayout());
+		comp.setLayout(new GridLayout(2, false));
 		comp.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
 		SelectionListener updateStatusListener=new SelectionAdapter()
@@ -72,7 +74,11 @@ public class SaveMacroDialog extends TitleAreaDialog
 			
 		};
 		
-		Composite nameField=new Composite(comp, SWT.None);
+		Composite nameHalf=new Composite(comp, SWT.None);
+		nameHalf.setLayout(new GridLayout());
+		nameHalf.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		Composite nameField=new Composite(nameHalf, SWT.None);
 		nameField.setLayout(new GridLayout(2, false));
 		nameField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		
@@ -90,12 +96,12 @@ public class SaveMacroDialog extends TitleAreaDialog
 		mDescription=new Text(nameField, SWT.SINGLE | SWT.BORDER);
 		mDescription.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));		
 		
-		mSaveCheck=new Button(comp, SWT.CHECK);
+		mSaveCheck=new Button(nameHalf, SWT.CHECK);
 		mSaveCheck.setText("Save macro (for permanent use)");
 		mSaveCheck.setSelection(false);
 		mSaveCheck.addSelectionListener(updateStatusListener);
 		
-		Composite dataComp=new Composite(comp, SWT.None);
+		Composite dataComp=new Composite(nameHalf, SWT.None);
 		dataComp.setLayout(new GridLayout(2, false));
 		dataComp.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
@@ -105,9 +111,23 @@ public class SaveMacroDialog extends TitleAreaDialog
 		mID.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		mID.addModifyListener(updateModifyListener);
 		
-		mShowDialogCheck=new Button(comp, SWT.CHECK);
+		mShowDialogCheck=new Button(nameHalf, SWT.CHECK);
 		mShowDialogCheck.setText("Show this dialog after recording each macro");
-		mShowDialogCheck.setSelection(Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_ShowSaveDialogAfterRecording)); 
+		mShowDialogCheck.setSelection(Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_ShowSaveDialogAfterRecording));
+		
+		Composite commandHalf=new Composite(comp, SWT.None);
+		commandHalf.setLayout(new GridLayout());
+		commandHalf.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		Table commandTable=new Table(commandHalf, SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL);
+		GridData gd=new GridData(GridData.FILL_BOTH);
+		gd.heightHint=250;
+		gd.widthHint=200;
+		commandTable.setLayoutData(gd);
+		for (IMacroCommand command : mCommands) {
+			TableItem ti=new TableItem(commandTable, SWT.None);
+			ti.setText(command.getName());
+		}
 		
 		mName.setFocus();
 		return comp;
@@ -165,13 +185,11 @@ public class SaveMacroDialog extends TitleAreaDialog
 		{
 			mResultMacro=new EditorMacro(mCommands, mID.getText(), mName.getText(), mDescription.getText());
 			System.out.println("Save macro as :"+mName.getText());
-			Activator.getDefault().setLastMacro(mResultMacro);
 		}
 		else
 		{
 			mResultMacro=new EditorMacro(mCommands, "", mName.getText(), "");
 			System.out.println("Save temp macro as :"+mName.getText());
-			Activator.getDefault().setLastMacro(mResultMacro);
 		}
 		
 		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_ShowSaveDialogAfterRecording, mShowDialogCheck.getSelection());

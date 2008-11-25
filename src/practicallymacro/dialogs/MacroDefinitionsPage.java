@@ -46,6 +46,7 @@ import practicallymacro.model.MacroManager;
 public class MacroDefinitionsPage extends PreferencePage implements
 		IWorkbenchPreferencePage {
 
+	protected static final String KEY_SESSIONID = "SessionID";
 	private Table mMacroTable;
 	private Text mDescriptionText;
 	private Button mNewButton;
@@ -55,7 +56,8 @@ public class MacroDefinitionsPage extends PreferencePage implements
 	private Button mExportButton;
 	private Button mImportButton;
 	
-	private List<EditorMacro> mAllMacros;
+	private Map<Integer, EditorMacro> mAllMacros;
+	private int mNextUniqueID=999999999;
 	
 	public MacroDefinitionsPage() {
 		// TODO Auto-generated constructor stub
@@ -69,6 +71,11 @@ public class MacroDefinitionsPage extends PreferencePage implements
 	public MacroDefinitionsPage(String title, ImageDescriptor image) {
 		super(title, image);
 		// TODO Auto-generated constructor stub
+	}
+	
+	private int getNextUniqueID()
+	{
+		return mNextUniqueID++;
 	}
 
 	@Override
@@ -114,16 +121,7 @@ public class MacroDefinitionsPage extends PreferencePage implements
 		descData.heightHint=gc.getFontMetrics().getHeight()*5;
 		mDescriptionText.setLayoutData(descData);
 
-		mAllMacros=MacroManager.getManager().getAllMacros();
-		mAllMacros.addAll(MacroManager.getManager().getUsedTempMacros(-1)); //this will allow these macros to be converted into permanent macros or otherwise edited
-		
-		Collections.sort(mAllMacros, new Comparator<EditorMacro>()
-		{
-			public int compare(EditorMacro o1, EditorMacro o2)
-			{
-				return o1.getName().compareTo(o2.getName());
-			}
-		});
+		mAllMacros=MacroManager.getManager().getUniqueMacroMap();
 		
 		rebuildMacroTable();
 		
@@ -136,11 +134,11 @@ public class MacroDefinitionsPage extends PreferencePage implements
 		{
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				EditMacroDialog dlg=new EditMacroDialog(getShell(), null, getIDSet());
+				EditMacroDialog dlg=new EditMacroDialog(getShell(), null, getIDSet(), true, false);
 				if (dlg.open()==Dialog.OK)
 				{
 					EditorMacro newMacro=dlg.getMacro();
-					mAllMacros.add(newMacro);
+					mAllMacros.put(getNextUniqueID(), newMacro);
 					rebuildMacroTable();
 				}
 			}
@@ -156,16 +154,17 @@ public class MacroDefinitionsPage extends PreferencePage implements
 				List<EditorMacro> deletedItems=new ArrayList<EditorMacro>();
 				List<EditorMacro> failedToDeleteForKeyBindings=new ArrayList<EditorMacro>();
 				List<EditorMacro> failedToDeletedContributed=new ArrayList<EditorMacro>();
-				Map<EditorMacro, Set<EditorMacro>> inUseMap=new HashMap<EditorMacro, Set<EditorMacro>>();
+				Map<MacroHolder, Set<MacroHolder>> inUseMap=new HashMap<MacroHolder, Set<MacroHolder>>();
 				TableItem[] selItems=mMacroTable.getSelection();
-				for (int i = 0; i < selItems.length; i++) {
+				for (int i = 0; i < selItems.length; i++)
+				{
 					TableItem tableItem = selItems[i];
 					
 					//see if macro is mapped as a command (can't delete) or is used as part of another command (warning)
 					EditorMacro macro=(EditorMacro)tableItem.getData();
 					
 					boolean hasBinding=hasBinding(macro.getID());
-					Set<EditorMacro> uses=getUsageOfMacro(mAllMacros, macro);
+					Set<MacroHolder> uses=getUsageOfMacro(mAllMacros, macro);
 					if (macro.isContributed())
 					{
 						failedToDeletedContributed.add(macro);
@@ -176,11 +175,11 @@ public class MacroDefinitionsPage extends PreferencePage implements
 					}
 					else if (uses.size()>0)
 					{
-						inUseMap.put(macro, uses);
+						inUseMap.put(new MacroHolder((Integer)tableItem.getData(KEY_SESSIONID), macro), uses);
 					}
 					else
 					{
-						mAllMacros.remove(macro);
+						mAllMacros.remove(tableItem.getData(KEY_SESSIONID));
 						deletedItems.add(macro);
 					}
 				}
@@ -217,15 +216,16 @@ public class MacroDefinitionsPage extends PreferencePage implements
 					MessageDialog.openError(getShell(), "Failed to delete some macros", "The following macros cannot be deleted because they have keys mapped to them.  You must first remove the key mappings.\n"+buffer.toString());
 				}
 				
-				Map<EditorMacro, Set<EditorMacro>> stillInUse=new HashMap<EditorMacro, Set<EditorMacro>>();
+				Map<MacroHolder, Set<MacroHolder>> stillInUse=new HashMap<MacroHolder, Set<MacroHolder>>();
 				
 				boolean madeChange=true;
 				while (madeChange)
 				{
 					madeChange=false;
-					for (EditorMacro macro : inUseMap.keySet())
+					for (Map.Entry<MacroHolder, Set<MacroHolder>> entry: inUseMap.entrySet())
 					{
-						Set<EditorMacro> inUseSet=inUseMap.get(macro);
+						MacroHolder holder=entry.getKey();
+						Set<MacroHolder> inUseSet=inUseMap.get(holder);
 						
 						//remove any deleted items from this set
 						for (EditorMacro deletedMacro : deletedItems) {
@@ -234,14 +234,14 @@ public class MacroDefinitionsPage extends PreferencePage implements
 						
 						if (inUseSet.size()>0)
 						{
-							stillInUse.put(macro, inUseSet);
+							stillInUse.put(holder, inUseSet);
 						}
 						else
 						{
 							//since all uses were removed, I can delete it now
-							deletedItems.add(macro);
+							deletedItems.add(holder.mMacro);
 							madeChange=true;
-							mAllMacros.remove(macro);
+							mAllMacros.remove(holder.mSessionMacroID);
 						}
 					}
 					inUseMap=stillInUse;
@@ -251,27 +251,28 @@ public class MacroDefinitionsPage extends PreferencePage implements
 				{
 					StringBuffer buffer=new StringBuffer();
 					buffer.append("Some macros are used by other macros.  Continue with delete?\n");
-					for (EditorMacro macro : inUseMap.keySet()) {
+					for (Map.Entry<MacroHolder, Set<MacroHolder>> entry: inUseMap.entrySet()) {
+						EditorMacro macro=entry.getKey().mMacro;
 						buffer.append(macro.getName());
 						buffer.append(" is used by: ");
-						Set<EditorMacro> usingMacros=inUseMap.get(macro);
+						Set<MacroHolder> usingMacros=entry.getValue();
 						boolean first=true;
-						for (EditorMacro usingMacro : usingMacros) {
+						for (MacroHolder usingMacro : usingMacros) {
 							if (!first)
 							{
 								buffer.append(", ");
 							}
 							first=false;
-							buffer.append(usingMacro.getName());
+							buffer.append(usingMacro.mMacro.getName());
 						}
 						buffer.append("\n");
 					}
 					boolean okayToDelete=MessageDialog.openQuestion(getShell(), "Macros in use", buffer.toString());
 					if (okayToDelete)
 					{
-						for (EditorMacro macro : inUseMap.keySet())
+						for (MacroHolder holder : inUseMap.keySet())
 						{
-							mAllMacros.remove(macro);
+							mAllMacros.remove(holder.mSessionMacroID);
 						}
 					}
 				}
@@ -289,12 +290,15 @@ public class MacroDefinitionsPage extends PreferencePage implements
 				TableItem[] selItems=mMacroTable.getSelection();
 				if (selItems.length>0)
 				{
-					EditMacroDialog dlg=new EditMacroDialog(getShell(), (EditorMacro)selItems[0].getData(), getIDSet());
+					EditorMacro macro=(EditorMacro)selItems[0].getData();
+					EditMacroDialog dlg=new EditMacroDialog(getShell(), macro, getIDSet(), (getUsageOfMacro(mAllMacros, macro).size()==0), macro.isContributed());
 					if (dlg.open()==Dialog.OK)
 					{
-						EditorMacro macro=dlg.getMacro();
-						mAllMacros.remove(selItems[0].getData());
-						mAllMacros.add(macro);
+						Integer sessionID=(Integer)selItems[0].getData(KEY_SESSIONID);
+						macro=dlg.getMacro();
+						mAllMacros.put(sessionID, macro);
+//						mAllMacros.remove(selItems[0].getData());
+//						mAllMacros.add(macro);
 						rebuildMacroTable();
 					}
 				}
@@ -317,7 +321,7 @@ public class MacroDefinitionsPage extends PreferencePage implements
 						TableItem tableItem = selItems[i];
 						EditorMacro oldMacro=(EditorMacro)tableItem.getData();
 						EditorMacro copiedMacro=new EditorMacro(oldMacro.getCommands(), oldMacro.getID()+".copy", oldMacro.getName()+" (copy)", oldMacro.getDescription());
-						mAllMacros.add(copiedMacro);
+						mAllMacros.put(getNextUniqueID(), copiedMacro);
 					}
 					rebuildMacroTable();
 				}
@@ -356,7 +360,7 @@ public class MacroDefinitionsPage extends PreferencePage implements
 				if (dlg.open()==Dialog.OK)
 				{
 					Map<String, EditorMacro> idMap=new HashMap<String, EditorMacro>();
-					for (EditorMacro existingMacro : mAllMacros)
+					for (EditorMacro existingMacro : mAllMacros.values())
 					{
 						idMap.put(existingMacro.getID(), existingMacro);
 					}
@@ -365,10 +369,11 @@ public class MacroDefinitionsPage extends PreferencePage implements
 					{
 						if (!idMap.containsKey(newMacro.getID()))
 						{
-							mAllMacros.add(newMacro);
+							mAllMacros.put(getNextUniqueID(), newMacro);
 						}
 						else
 						{
+							//TODO: give them a choice to create new IDs and add these commands or override the existing macros
 							MessageBox mb=new MessageBox(getShell(), SWT.OK);
 							mb.setText("Import macro");
 							mb.setMessage("Skipping macro because the id is already in use: "+newMacro.getID());
@@ -388,7 +393,7 @@ public class MacroDefinitionsPage extends PreferencePage implements
 	protected Set<String> getIDSet()
 	{
 		Set<String> currentIDs=new HashSet<String>();
-		for (EditorMacro macro: mAllMacros)
+		for (EditorMacro macro: mAllMacros.values())
 		{
 			if (macro.getID().length()>0)
 			{
@@ -426,10 +431,12 @@ public class MacroDefinitionsPage extends PreferencePage implements
 		return false;
 	}
 
-	protected Set<EditorMacro> getUsageOfMacro(List<EditorMacro> allMacros, EditorMacro macro)
+	public static Set<MacroHolder> getUsageOfMacro(Map<Integer, EditorMacro> allMacros, EditorMacro macro)
 	{
-		Set<EditorMacro> usingMacros=new HashSet<EditorMacro>();
-		for (EditorMacro editorMacro : allMacros) {
+		Set<MacroHolder> usingMacros=new HashSet<MacroHolder>();
+		for (Map.Entry<Integer, EditorMacro> entry : allMacros.entrySet())
+		{
+			EditorMacro editorMacro=entry.getValue();
 			List<IMacroCommand> commands=editorMacro.getCommands();
 			for (IMacroCommand macroCommand : commands)
 			{
@@ -438,7 +445,7 @@ public class MacroDefinitionsPage extends PreferencePage implements
 				{
 					if (((EclipseCommand)macroCommand).getCommandID().equals(macro.getID()))
 					{
-						usingMacros.add(editorMacro);
+						usingMacros.add(new MacroHolder(entry.getKey(), editorMacro));
 						break;
 					}
 				}
@@ -450,17 +457,23 @@ public class MacroDefinitionsPage extends PreferencePage implements
 	protected void rebuildMacroTable()
 	{
 		mMacroTable.removeAll();
-		Collections.sort(mAllMacros, new Comparator<EditorMacro>()
+		List<MacroHolder> allMacros=new ArrayList<MacroHolder>();
+		for (Map.Entry<Integer, EditorMacro> entry : mAllMacros.entrySet()) {
+			MacroHolder holder=new MacroHolder(entry.getKey(), entry.getValue());
+			allMacros.add(holder);
+		}
+		Collections.sort(allMacros, new Comparator<MacroHolder>()
 		{
-			public int compare(EditorMacro o1, EditorMacro o2)
+			public int compare(MacroHolder o1, MacroHolder o2)
 			{
-				return o1.getName().compareTo(o2.getName());
+				return o1.mMacro.getName().compareTo(o2.mMacro.getName());
 			}
 		});
 		
-		for (EditorMacro macro: mAllMacros)
+		for (MacroHolder holder: allMacros)
 		{
 			TableItem t=new TableItem(mMacroTable, SWT.None);
+			EditorMacro macro=holder.mMacro;
 			t.setText(0, macro.getName());
 			t.setText(1, macro.getID());
 			if (macro.isContributed())
@@ -468,7 +481,33 @@ public class MacroDefinitionsPage extends PreferencePage implements
 				t.setText(2, "true");
 			}
 			t.setData(macro);
+			t.setData(KEY_SESSIONID, holder.mSessionMacroID);
 		}
+	}
+	
+	private static class MacroHolder
+	{
+		Integer mSessionMacroID;
+		EditorMacro mMacro;
+		public MacroHolder(Integer id, EditorMacro macro)
+		{
+			mSessionMacroID=id;
+			mMacro=macro;
+		}
+		
+		@Override
+		public boolean equals(Object arg0)
+		{
+			return mSessionMacroID.equals(arg0);
+		}
+		
+		@Override
+		public int hashCode()
+		{
+			return mSessionMacroID.hashCode();
+		}
+		
+		
 	}
 
 	public void init(IWorkbench workbench) {
@@ -495,8 +534,8 @@ public class MacroDefinitionsPage extends PreferencePage implements
 	private void updateButtons()
 	{
 		int selCount=mMacroTable.getSelectionCount();
-		TableItem[] selItems=mMacroTable.getSelection();
-		mEditButton.setEnabled(selCount==1 && !((EditorMacro)selItems[0].getData()).isContributed());
+//		TableItem[] selItems=mMacroTable.getSelection();
+		mEditButton.setEnabled(selCount==1);
 		mDeleteButton.setEnabled(selCount>0);
 		mExportButton.setEnabled(selCount>0);
 //		mCopyButton.setEnabled(selCount>0);

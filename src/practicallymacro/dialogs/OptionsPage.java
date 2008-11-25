@@ -50,7 +50,7 @@ public class OptionsPage extends PreferencePage implements
 		comp.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
 		mRecordRawChars=new Button(comp, SWT.CHECK);
-		mRecordRawChars.setText("Record raw character events");
+		mRecordRawChars.setText("Record raw character events (not recommended)");
 		mRecordRawChars.setToolTipText("If set, raw keyup/down events will be recorded into the macro.\n  This allows the capturing of processing of special events like adding matching quotes.");
 		mRecordRawChars.setSelection(Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_RecordRawCharacterKeys));
 		

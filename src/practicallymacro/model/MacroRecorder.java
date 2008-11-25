@@ -9,6 +9,9 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.IExecutionListener;
 import org.eclipse.core.commands.NotHandledException;
+import org.eclipse.jface.bindings.Binding;
+import org.eclipse.jface.bindings.keys.KeySequence;
+import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.swt.SWT;
@@ -16,6 +19,8 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.keys.IBindingService;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 import org.eclipse.ui.texteditor.IWorkbenchActionDefinitionIds;
 
@@ -55,6 +60,16 @@ public class MacroRecorder implements Listener, IExecutionListener, IDocumentLis
 		mRecordCommands=true;
 	}
 	
+	private boolean isBound(Event event)
+	{
+		IBindingService bindingService = (IBindingService)PlatformUI.getWorkbench().getAdapter(IBindingService.class);
+		KeyStroke k=KeyStroke.getInstance(event.stateMask, event.keyCode);
+		if (k==null)
+			return false;
+		Binding b=bindingService.getPerfectMatch(KeySequence.getInstance(k));
+		return (b!=null);
+	}
+	
 	public void stop()
 	{
 		updateIncrementalFindMode();
@@ -65,6 +80,8 @@ public class MacroRecorder implements Listener, IExecutionListener, IDocumentLis
 		updateIncrementalFindMode();
 		if (event.type==SWT.KeyDown)
 		{
+			if (isBound(event))
+				return;
 			IMacroCommand command=null;
 			if (MacroManager.getManager().isRecordingRawKeystrokes())
 			{
@@ -89,6 +106,9 @@ public class MacroRecorder implements Listener, IExecutionListener, IDocumentLis
 		{
 			if (MacroManager.getManager().isRecordingRawKeystrokes())
 			{
+				if (isBound(event))
+					return;
+				
 				IMacroCommand command=new KeystrokeCommand(event);
 				recordCommand(command);
 //				mCommands.add(command);
@@ -275,4 +295,5 @@ public class MacroRecorder implements Listener, IExecutionListener, IDocumentLis
 	public IDocumentListener getMarkUpdater() {
 		return mMarkUpdater;
 	}
+	
 }

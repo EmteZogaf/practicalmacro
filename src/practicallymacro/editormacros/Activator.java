@@ -3,7 +3,6 @@ package practicallymacro.editormacros;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
-import practicallymacro.model.EditorMacro;
 import practicallymacro.model.MacroManager;
 
 
@@ -17,13 +16,6 @@ public class Activator extends AbstractUIPlugin {
 
 	// The shared instance
 	private static Activator plugin;
-	
-	private String mCurrentMacroState;
-	private EditorMacro mLastMacro;
-	
-	public static final String State_Idle="MACROSTATE_IDLE";
-	public static final String State_Recording="MACROSTATE_RECORDING";
-	public static final String State_Playing="MACROSTATE_PLAYING";
 	
 	/**
 	 * The constructor
@@ -39,19 +31,6 @@ public class Activator extends AbstractUIPlugin {
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		plugin = this;
-		mCurrentMacroState=State_Idle;
-		
-		
-//		Display.getDefault().asyncExec(new Runnable()
-//		{
-//			@Override
-//			public void run()
-//			{
-//				ToolBar toolBar = new ToolBar(Display.getDefault().getActiveShell(), SWT.FLAT | SWT.RIGHT);
-//			    final ToolBarManager manager = new ToolBarManager(toolBar);
-////			    toolBarManager.add (getAction (IncrementDecrementAction.DECREMENT_ID));
-//			}
-//		});
 	}
 
 	/*
@@ -75,23 +54,4 @@ public class Activator extends AbstractUIPlugin {
 		return plugin;
 	}
 
-	public String getMacroState()
-	{
-		return mCurrentMacroState;
-	}
-
-	public void setMacroState(String newState)
-	{
-		mCurrentMacroState=newState;
-	}
-
-	public void setLastMacro(EditorMacro newMacro)
-	{
-		mLastMacro=newMacro;
-	}
-	
-	public EditorMacro getLastMacro()
-	{
-		return mLastMacro;
-	}
 }

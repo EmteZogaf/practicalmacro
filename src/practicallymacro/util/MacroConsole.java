@@ -21,9 +21,11 @@ public class MacroConsole extends IOConsole
 	public static final int Type_Error=2;
 	public static final int Type_RecordingCommand=3;
 	public static final int Type_PlayingCommand=4;
+	public static final int Type_DebugInfo=5;
 	public static final Color Red=new Color(Display.getDefault(), 255,0,0);
 	public static final Color Green=new Color(Display.getDefault(), 0,128,0);
 	public static final Color Blue=new Color(Display.getDefault(), 0,0,255);
+	public static final Color Purple=new Color(Display.getDefault(), 128,0,128);
 	public MacroConsole()
 	{
 		super("Practically Macro", null);
@@ -107,6 +109,9 @@ public class MacroConsole extends IOConsole
 			break;
 		case Type_RecordingCommand:
 			outputStream.setColor(Green);
+			break;
+		case Type_DebugInfo:
+			outputStream.setColor(Purple);
 			break;
 		}
 	}

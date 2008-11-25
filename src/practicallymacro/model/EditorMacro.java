@@ -5,15 +5,17 @@ import java.util.List;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.ui.IEditorPart;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import practicallymacro.commands.EclipseCommand;
 import practicallymacro.commands.IMacroCommand;
-import practicallymacro.editormacros.Activator;
+import practicallymacro.dialogs.MacroCommandDebugInfo;
+import practicallymacro.dialogs.MacroDebugDialog;
 import practicallymacro.util.MacroConsole;
 import practicallymacro.util.Utilities;
 
@@ -26,6 +28,7 @@ public class EditorMacro {
 	private long mLastUse;
 	private int mMark=0;
 	private boolean mIsContributed;
+	private int mSessionID=0;
 	
 	private static int mMaxMacroSize=1000;
 	
@@ -62,11 +65,13 @@ public class EditorMacro {
 //		widget.addListener(MacroManager.Macro_Event, MacroManager.getManager().getMacroRunListener());
 //		MacroManager.getManager().setMark(widget.getCaretOffset());
 
-		Activator.getDefault().setLastMacro(this);
+		MacroManager.getManager().setLastMacro(this);
 		mLastUse=System.currentTimeMillis();
 		
 		List<Object> flattenedList=new ArrayList<Object>();
 		flattenMacro(flattenedList);
+		
+		boolean debugMode=MacroManager.getManager().isMacroDebugMode();
 		
 		MacroConsole.getConsole().writeln("Executing macro: "+getID(), MacroConsole.Type_Standard);
 		
@@ -85,8 +90,11 @@ public class EditorMacro {
 			final boolean[] canContinue=new boolean[]{true};
 			boolean mustPost=requiresPost(flattenedList);
 			
-			for (Object object : flattenedList)
+			List<MacroCommandDebugInfo> collectedDebugInfo=new ArrayList<MacroCommandDebugInfo>();
+			
+			for (int i=0;i<flattenedList.size();i++)
 			{
+				Object object = flattenedList.get(i);
 				if (object instanceof FlattenWrapper)
 				{
 					final FlattenWrapper wrapper=(FlattenWrapper)object;
@@ -130,12 +138,76 @@ public class EditorMacro {
 					}
 					else
 					{
+						if (debugMode)
+						{
+							StyledText text=Utilities.getStyledText(editor);
+							List<MacroCommandDebugInfo> combinedDebugInfo=new ArrayList<MacroCommandDebugInfo>();
+							combinedDebugInfo.addAll(collectedDebugInfo);
+							for (int k=i;k<flattenedList.size();k++)
+							{
+								Object obj=flattenedList.get(k);
+								if (obj instanceof IMacroCommand)
+								{
+									combinedDebugInfo.add(new MacroCommandDebugInfo((IMacroCommand)obj));
+								}
+							}
+							MacroDebugDialog dlg=new MacroDebugDialog(Display.getCurrent().getActiveShell(), combinedDebugInfo, /*mLastDebugWindowLocation, mLastDebugWindowSize,*/ text);
+							dlg.open();
+							int selectedAction=dlg.getSelectedAction();
+							if (selectedAction==MacroDebugDialog.ACTION_CANCELEXECUTION)
+							{
+								break; //just kick out
+							}
+							else if (selectedAction==MacroDebugDialog.ACTION_CONTINUETOEND)
+							{
+								debugMode=false;
+							}
+						}
 						MacroConsole.getConsole().writeln("--Executing command: "+command.getName(), MacroConsole.Type_PlayingCommand);
 						canContinue[0]=command.execute(editor);
 						if (!canContinue[0])
 						{
 							//TODO: error message?
+							if (debugMode)
+							{}
 							break;
+						}
+						
+						if (debugMode)
+						{
+							//patch my list of commands with the proper info
+							StyledText text=Utilities.getStyledText(editor);
+							Point selRange=text.getSelection();
+							int caretPos=text.getCaretOffset();
+							Point cursorPos=new Point(0,0);
+							Point selEndPos=new Point(0,0);
+							if (selRange.x<selRange.y) //if there is a selection
+							{
+								if (caretPos==selRange.x)
+								{
+									translate(text, selRange.y, selEndPos);
+								}
+								else
+								{
+									translate(text, selRange.x, selEndPos);
+								}
+							}
+							else
+							{
+								selEndPos=null;
+							}
+							translate(text, caretPos, cursorPos);
+							MacroCommandDebugInfo newInfo=new MacroCommandDebugInfo(command, cursorPos, selEndPos);
+							collectedDebugInfo.add(newInfo);
+							MacroConsole.getConsole().writeln("--After command, cursor at: Line "+cursorPos.x+", Column "+cursorPos.y, MacroConsole.Type_DebugInfo);
+							if (selEndPos==null)
+							{
+								MacroConsole.getConsole().writeln("--After command, there is no selection", MacroConsole.Type_DebugInfo);
+							}
+							else
+							{
+								MacroConsole.getConsole().writeln("--After command, the selection pivot point is at: Line "+selEndPos.x+", Column "+selEndPos.y, MacroConsole.Type_DebugInfo);
+							}
 						}
 					}
 				}
@@ -167,6 +239,14 @@ public class EditorMacro {
 			MacroConsole.getConsole().write(e, MacroConsole.Type_Error);
 		}
 		
+	}
+
+	private void translate(StyledText text, int offset, Point textPos)
+	{
+		int lineAtOffset=text.getLineAtOffset(offset);
+		int column=offset-text.getOffsetAtLine(lineAtOffset);
+		textPos.x=lineAtOffset+1;
+		textPos.y=column+1;
 	}
 
 	private void updateMacroStack(FlattenWrapper wrapper)
@@ -373,4 +453,31 @@ public class EditorMacro {
 		
 		return false;
 	}
+
+	public int getSessionID() {
+		return mSessionID;
+	}
+
+	public void setSessionID(int sessionID)
+	{
+		if (mSessionID==0)
+			mSessionID = sessionID;
+		else
+		{
+			throw new RuntimeException("Session ID set twice. Macro: "+toString());
+		}
+	}
+	
+	@Override
+	public String toString()
+	{
+		StringBuffer buffer=new StringBuffer();
+		buffer.append("ID: ");
+		if (getID()==null)
+			buffer.append("<none>");
+		else
+			buffer.append(getID());
+		return buffer.toString();
+	}
+	
 }

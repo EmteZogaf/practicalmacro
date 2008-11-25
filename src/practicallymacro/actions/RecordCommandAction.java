@@ -75,9 +75,9 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 
 	public void run(IAction action) {
 
-		String state = Activator.getDefault().getMacroState();
+		String state = MacroManager.getManager().getMacroState();
 
-		if (state == Activator.State_Idle)
+		if (state == MacroManager.State_Idle)
 		{
 			IEditorPart editor=Utilities.getActiveEditor();
 			StyledText styledText = Utilities.getStyledText(editor);
@@ -103,9 +103,9 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 
 			registerFindAction();
 
-			Activator.getDefault().setMacroState(Activator.State_Recording);
+			MacroManager.getManager().setMacroState(MacroManager.State_Recording);
 		} 
-		else if (state == Activator.State_Recording)
+		else if (state == MacroManager.State_Recording)
 		{
 			shutDownRecorder();
 //			if (mRecorder==null)
@@ -244,8 +244,8 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 				
 				if (newMacro!=null)
 				{
-					Activator.getDefault().setLastMacro(newMacro);
 					MacroManager.getManager().addMacro(newMacro);
+					MacroManager.getManager().setLastMacro(newMacro);
 					newMacro.dump();
 				}
 				
@@ -257,7 +257,7 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 		finally
 		{
 			mRecorder=null;
-			Activator.getDefault().setMacroState(Activator.State_Idle);
+			MacroManager.getManager().setMacroState(MacroManager.State_Idle);
 		}
 	}
 
@@ -281,8 +281,7 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 	}
 
 	public void selectionChanged(IAction action, ISelection selection) {
-		// TODO Auto-generated method stub
-		System.out.println("here we go");
+		// nothing to do
 	}
 
 	private void registerFindAction()

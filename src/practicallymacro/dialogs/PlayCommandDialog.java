@@ -30,7 +30,6 @@ import org.eclipse.ui.commands.ICommandService;
 import practicallymacro.commands.EclipseCommand;
 import practicallymacro.commands.IMacroCommand;
 import practicallymacro.commands.TemporaryMacroCommand;
-import practicallymacro.editormacros.Activator;
 import practicallymacro.model.EditorMacro;
 import practicallymacro.model.MacroManager;
 import practicallymacro.util.MacroConsole;
@@ -173,7 +172,7 @@ public class PlayCommandDialog extends Dialog
 				public void run()
 				{
 					//turn off recording while this command is played so that we can only record the command itself, not its components
-					if (Activator.getDefault().getMacroState()==Activator.State_Recording)
+					if (MacroManager.getManager().getMacroState()==MacroManager.State_Recording)
 					{
 						//turn off command recording
 						MacroManager.getManager().getRecorder().pauseRecording();
@@ -188,7 +187,7 @@ public class PlayCommandDialog extends Dialog
 							break;
 						}
 					}
-					if (Activator.getDefault().getMacroState()==Activator.State_Recording)
+					if (MacroManager.getManager().getMacroState()==MacroManager.State_Recording)
 					{
 						//turn command recording back on
 						MacroManager.getManager().getRecorder().resumeRecording();
