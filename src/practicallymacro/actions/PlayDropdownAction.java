@@ -104,7 +104,7 @@ public class PlayDropdownAction implements IWorkbenchWindowPulldownDelegate
 		if (macros.size()>0)
 		{
 			MenuItem cascadeMenu=new MenuItem(menu, SWT.CASCADE);
-			cascadeMenu.setText("Macros");
+			cascadeMenu.setText("Saved Macros");
 			Menu mruMenu=new Menu(cascadeMenu);
 			cascadeMenu.setMenu(mruMenu);
 			for (EditorMacro editorMacro : macros)
@@ -114,6 +114,8 @@ public class PlayDropdownAction implements IWorkbenchWindowPulldownDelegate
 				item.fill(mruMenu, -1);
 			}
 		}
+		
+		MenuItem sep=new MenuItem(menu, SWT.SEPARATOR);
 		
 		//add the mru list of macro/temp macros that can be edited (or viewed?)
 		List<EditorMacro> allMacros=new ArrayList<EditorMacro>();
