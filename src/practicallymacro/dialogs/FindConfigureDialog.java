@@ -34,11 +34,14 @@ public class FindConfigureDialog extends Dialog
 	private Button mSelectionScope;
 //	private Button mNormalReplace;
 	
-	public FindConfigureDialog(Shell shell, FindCommand sourceCommand)
+	private String mInitialSearchString;
+	
+	public FindConfigureDialog(Shell shell, FindCommand sourceCommand, String initialSearchString)
 	{
 		super(shell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
 		mSourceCommand=sourceCommand;
+		mInitialSearchString=initialSearchString;
 	}
 	
 	@Override
@@ -69,7 +72,7 @@ public class FindConfigureDialog extends Dialog
 		mSearchText=new Text(searchStringComp, SWT.BORDER | SWT.SINGLE);
 		mSearchText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		mSearchSelectionRadio=new Button(searchStringComp, SWT.RADIO);
-		mSearchSelectionRadio.setText("Use current selection");
+		mSearchSelectionRadio.setText("Use clipboard (or selection)");
 		mSearchSelectionRadio.addSelectionListener(new SelectionAdapter()
 		{
 			@Override
@@ -123,14 +126,19 @@ public class FindConfigureDialog extends Dialog
 		mWrap.setSelection(mSourceCommand.isWrapSearch());
 		mSelectionScope.setSelection(mSourceCommand.isScopeIsSelection());
 		
-		if (mSourceCommand.getSearchString()==null)
-		{
-			mSearchSelectionRadio.setSelection(true);
-		}
-		else
+		if (mSourceCommand.getSearchString()!=null)
 		{
 			mSearchStringRadio.setSelection(true);
 			mSearchText.setText(mSourceCommand.getSearchString());
+		}
+		else if (mInitialSearchString!=null)
+		{
+			mSearchStringRadio.setSelection(true);
+			mSearchText.setText(mInitialSearchString);
+		}
+		else
+		{
+			mSearchSelectionRadio.setSelection(true);
 		}
 		
 		if (mSourceCommand.getReplaceString()==null)

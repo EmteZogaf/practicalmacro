@@ -18,7 +18,7 @@ public class MacroFindAction extends Action
 	public void run()
 	{
 		FindCommand fc=new FindCommand();
-		fc.configure(Display.getDefault().getActiveShell());
+		fc.configureNew(Display.getDefault().getActiveShell());
 		mRecorder.recordCommand(fc);
 		fc.execute(mRecorder.getEditor());
 		System.out.println("running find action");

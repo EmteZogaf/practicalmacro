@@ -10,6 +10,8 @@ import org.eclipse.jface.text.IFindReplaceTargetExtension;
 import org.eclipse.jface.text.IFindReplaceTargetExtension3;
 import org.eclipse.jface.text.Region;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorPart;
@@ -68,8 +70,30 @@ public class FindCommand implements IMacroCommand {
 	
 	public void configure(Shell shell)
 	{
-		FindConfigureDialog dlg=new FindConfigureDialog(shell, this);
+		configureWithSearchTerm(shell, null);
+	}
+	
+	private void configureWithSearchTerm(Shell shell, String initialSearchString)
+	{
+		FindConfigureDialog dlg=new FindConfigureDialog(shell, this, initialSearchString);
 		dlg.open();
+	}
+	
+	public void configureNew(Shell shell)
+	{
+		String initialSearchString=null;
+		IEditorPart editor=Utilities.getActiveEditor();
+		if (editor!=null)
+		{
+			StyledText widget=Utilities.getStyledText(editor);
+			if (widget!=null)
+			{
+				initialSearchString=widget.getSelectionText();
+				if (initialSearchString.length()==0)
+					initialSearchString=null;
+			}
+		}
+		configureWithSearchTerm(shell, initialSearchString);
 	}
 
 	public IMacroCommand copy()
@@ -134,9 +158,27 @@ public class FindCommand implements IMacroCommand {
 						String searchString=mSearchString;
 						if (searchString==null)
 						{
-							searchString=widget.getSelectionText();
+							//try getting search text from clipboard, if not clipboard text, then use current selection
+							try
+							{
+								Clipboard cb = new Clipboard(widget.getDisplay());
+								TextTransfer transfer = TextTransfer.getInstance();
+						        searchString = (String) cb.getContents(transfer);
+							}
+							catch (IllegalArgumentException e)
+							{
+								//no text on clipboard; don't print error
+							}
+							catch (Exception e)
+							{
+								e.printStackTrace();
+							}
+							
+							//backup strategy is to use the selection
+							if (searchString==null)
+								searchString=widget.getSelectionText();
 						}
-						if (searchString.length()==0)
+						if (searchString==null || searchString.length()==0)
 							return false;
 
 						int startPos=widget.getCaretOffset()-1;
@@ -244,7 +286,7 @@ public class FindCommand implements IMacroCommand {
 
 	public String getName()
 	{
-		return "Find "+mSearchString;
+		return "Find "+((mSearchString!=null) ? mSearchString : "<clipboard/selection>");
 	}
 
 	public boolean isConfigurable()
