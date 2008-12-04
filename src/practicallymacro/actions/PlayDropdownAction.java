@@ -115,7 +115,7 @@ public class PlayDropdownAction implements IWorkbenchWindowPulldownDelegate
 			}
 		}
 		
-		MenuItem sep=new MenuItem(menu, SWT.SEPARATOR);
+		new MenuItem(menu, SWT.SEPARATOR);
 		
 		//add the mru list of macro/temp macros that can be edited (or viewed?)
 		List<EditorMacro> allMacros=new ArrayList<EditorMacro>();
