@@ -5,7 +5,6 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.IHandler;
 import org.eclipse.core.commands.IHandlerListener;
 
-import practicallymacro.dialogs.QuickExecuteDialog;
 import practicallymacro.util.Utilities;
 
 public class QuickPlayHandler implements IHandler {

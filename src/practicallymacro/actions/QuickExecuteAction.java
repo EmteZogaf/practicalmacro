@@ -1,6 +1,5 @@
 package practicallymacro.actions;
 
-import org.eclipse.core.commands.Command;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.viewers.ISelection;
@@ -8,8 +7,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.commands.ICommandService;
 
 import practicallymacro.commands.EclipseCommand;
 import practicallymacro.dialogs.QuickExecuteDialog;
