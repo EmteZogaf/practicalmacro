@@ -20,7 +20,7 @@
          <action
                class="practicallymacro.actions.PlayDropdownAction"
                definitionId="practicallymacro.actions.playLastMacro"
-               icon="icons/play.gif"
+               icon="icons/play.png"
                id="practicallymacro.actions.playMacroAction"
                label="&amp;Play Macro"
                style="pulldown"
@@ -31,9 +31,24 @@
             </enablement>
           </action>
          <action
+               class="practicallymacro.actions.QuickExecuteAction"
+               definitionId="practicallymacro.actions.quickExecuteCommand"
+               icon="icons/quickPlay.png"
+               id="practicallymacro.actions.quickExecuteCommandAction"
+               label="&amp;Quick Play"
+               retarget="false"
+               state="false"
+               style="push"
+               toolbarPath="Normal/additions"
+               tooltip="Quick play a command">
+            <enablement>
+               <objectClass name="org.eclipse.jface.text.ITextSelection"/>
+            </enablement>
+         </action>
+         <action
                class="practicallymacro.actions.RecordCommandAction"
                definitionId="practicallymacro.actions.recordMacro"
-               icon="icons/record.gif"
+               icon="icons/record.png"
                id="practicallymacro.actions.recordMacroAction"
                label="&amp;Record Macro"
                retarget="false"
@@ -42,7 +57,9 @@
                toolbarPath="Normal/additions"
                tooltip="Record Macro">
             <enablement>
-               <objectClass name="org.eclipse.jface.text.ITextSelection"/>
+               <objectClass
+                     name="org.eclipse.jface.text.ITextSelection">
+               </objectClass>
             </enablement>
          </action>
       </actionSet>
@@ -56,6 +73,12 @@
             description="Play the last recorded macro"
             id="practicallymacro.actions.playLastMacro"
             name="Play last macro"/>
+      <command
+            categoryId="practicallymacro.category.utility.command"
+            defaultHandler="practicallymacro.commands.QuickPlayHandler"
+            description="Play a command"
+            id="practicallymacro.actions.quickExecuteCommand"
+            name="Quick Play Command"/>
       <command
             categoryId="practicallymacro.category.utility.command"
             defaultHandler="practicallymacro.commands.RecordHandler"
@@ -116,6 +139,11 @@
             contextId="org.eclipse.ui.textEditorScope"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="M1+M3+R"/>
+      <key
+            commandId="practicallymacro.actions.quickExecuteCommand"
+            contextId="org.eclipse.ui.textEditorScope"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+M3+Q"/>
    </extension>
    <extension
          point="PracticallyMacro.xmlCommandHandlers">
