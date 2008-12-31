@@ -18,19 +18,16 @@ import practicallymacro.util.Utilities;
 public class QuickExecuteAction implements IWorkbenchWindowActionDelegate {
 
 	IWorkbenchWindow mWindow;
-	@Override
 	public void dispose() {
 		// TODO Auto-generated method stub
 
 	}
 
-	@Override
 	public void init(IWorkbenchWindow window)
 	{
 		mWindow=window;
 	}
 
-	@Override
 	public void run(IAction action) {
 		Shell shell=null;
 		if (mWindow!=null)
@@ -50,7 +47,6 @@ public class QuickExecuteAction implements IWorkbenchWindowActionDelegate {
 
 	}
 
-	@Override
 	public void selectionChanged(IAction action, ISelection selection) {
 		// TODO Auto-generated method stub
 
