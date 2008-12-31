@@ -226,6 +226,11 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 			List<IMacroCommand> commands=mRecorder.getMacroCommands();
 			if (commands.size()>0)
 			{
+				if (Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_CompressCharInsertsWhenRecording))
+				{
+					commands=EditorMacro.compressStringInsertions(commands);
+				}
+				
 				EditorMacro newMacro=null;
 				if (Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_ShowSaveDialogAfterRecording))
 				{					

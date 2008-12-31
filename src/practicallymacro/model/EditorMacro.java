@@ -5,6 +5,9 @@ import java.util.List;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.ITextOperationTarget;
+import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.ITextViewerExtension;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Display;
@@ -14,8 +17,11 @@ import org.w3c.dom.Element;
 
 import practicallymacro.commands.EclipseCommand;
 import practicallymacro.commands.IMacroCommand;
+import practicallymacro.commands.InsertStringCommand;
 import practicallymacro.dialogs.MacroCommandDebugInfo;
 import practicallymacro.dialogs.MacroDebugDialog;
+import practicallymacro.editormacros.Activator;
+import practicallymacro.preferences.Initializer;
 import practicallymacro.util.MacroConsole;
 import practicallymacro.util.Utilities;
 
@@ -29,6 +35,7 @@ public class EditorMacro {
 	private int mMark=0;
 	private boolean mIsContributed;
 	private int mSessionID=0;
+	private boolean mRunAsCompoundEvent;
 	
 	private static int mMaxMacroSize=1000;
 	
@@ -41,6 +48,7 @@ public class EditorMacro {
 		mID=id;
 		mLastUse=System.currentTimeMillis();
 		mIsContributed=false;
+		mRunAsCompoundEvent=true;
 	}
 	
 	public void setContributed(boolean contributed)
@@ -53,6 +61,14 @@ public class EditorMacro {
 		return mIsContributed;
 	}
 	
+	public boolean isRunAsCompoundEvent() {
+		return mRunAsCompoundEvent;
+	}
+
+	public void setRunAsCompoundEvent(boolean runAsCompoundEvent) {
+		mRunAsCompoundEvent = runAsCompoundEvent;
+	}
+
 	public void run(final IEditorPart editor)
 	{
 		if (editor==null)
@@ -60,183 +76,214 @@ public class EditorMacro {
 			MessageDialog.openError(Display.getDefault().getActiveShell(), "Execute macro", "Cannot execute macro: the view with focus is not a text editor.");
 			return;
 		}
-//		StyledText widget=Utilities.getStyledText(editor);
-//		widget.removeListener(MacroManager.Macro_Event, MacroManager.getManager().getMacroRunListener());
-//		widget.addListener(MacroManager.Macro_Event, MacroManager.getManager().getMacroRunListener());
-//		MacroManager.getManager().setMark(widget.getCaretOffset());
-
-		MacroManager.getManager().setLastMacro(this);
-		mLastUse=System.currentTimeMillis();
-		
-		List<Object> flattenedList=new ArrayList<Object>();
-		flattenMacro(flattenedList);
 		
 		boolean debugMode=MacroManager.getManager().isMacroDebugMode();
-		
-		MacroConsole.getConsole().writeln("Executing macro: "+getID(), MacroConsole.Type_Standard);
-		
-		if (flattenedList.size()>mMaxMacroSize)
+		boolean saveWriteMode=Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_WriteToMacroConsole);
+		if (debugMode)
 		{
-			//TODO: error dialog
-			return;
+			Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_WriteToMacroConsole, true);
 		}
 		
+		boolean atomicExecution=!debugMode && isRunAsCompoundEvent(); //Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_ExecuteMacrosAtomically);
+		ITextViewer viewer =(ITextViewer)editor.getAdapter(ITextOperationTarget.class);
+		ITextViewerExtension viewExtension=null;
+		if (viewer instanceof ITextViewerExtension)
+		{
+			viewExtension=(ITextViewerExtension)viewer;
+		}
+		  
 		try
 		{
-			final MarkUpdater markUpdater=new MarkUpdater(false);
-			final IDocument document=Utilities.getIDocumentForEditor(Utilities.getActiveEditor());
-			document.addDocumentListener(markUpdater);		
-			
-			final boolean[] canContinue=new boolean[]{true};
-			boolean mustPost=requiresPost(flattenedList);
-			
-			List<MacroCommandDebugInfo> collectedDebugInfo=new ArrayList<MacroCommandDebugInfo>();
-			
-			for (int i=0;i<flattenedList.size();i++)
+			if (atomicExecution && viewExtension!=null)
 			{
-				Object object = flattenedList.get(i);
-				if (object instanceof FlattenWrapper)
+				viewExtension.getRewriteTarget().beginCompoundChange();
+			}
+			
+	//		StyledText widget=Utilities.getStyledText(editor);
+	//		widget.removeListener(MacroManager.Macro_Event, MacroManager.getManager().getMacroRunListener());
+	//		widget.addListener(MacroManager.Macro_Event, MacroManager.getManager().getMacroRunListener());
+	//		MacroManager.getManager().setMark(widget.getCaretOffset());
+	
+			MacroManager.getManager().setLastMacro(this);
+			mLastUse=System.currentTimeMillis();
+			
+			List<Object> flattenedList=new ArrayList<Object>();
+			flattenMacro(flattenedList);
+			
+			MacroConsole.getConsole().writeln("Executing macro: "+getID(), MacroConsole.Type_Standard);
+			
+			if (flattenedList.size()>mMaxMacroSize)
+			{
+				//TODO: error dialog
+				return;
+			}
+			
+			try
+			{
+				final MarkUpdater markUpdater=new MarkUpdater(false);
+				final IDocument document=Utilities.getIDocumentForEditor(Utilities.getActiveEditor());
+				document.addDocumentListener(markUpdater);		
+				
+				final boolean[] canContinue=new boolean[]{true};
+				boolean mustPost=requiresPost(flattenedList);
+				
+				List<MacroCommandDebugInfo> collectedDebugInfo=new ArrayList<MacroCommandDebugInfo>();
+				
+				for (int i=0;i<flattenedList.size();i++)
 				{
-					final FlattenWrapper wrapper=(FlattenWrapper)object;
-					if (mustPost)
+					Object object = flattenedList.get(i);
+					if (object instanceof FlattenWrapper)
 					{
-						Display.getCurrent().asyncExec(new Runnable()
+						final FlattenWrapper wrapper=(FlattenWrapper)object;
+						if (mustPost)
 						{
-							public void run()
+							Display.getCurrent().asyncExec(new Runnable()
 							{
-								updateMacroStack(wrapper);
-							}
-							
-						});
-					}
-					else
-					{
-						updateMacroStack(wrapper);
-					}
-				}
-				else
-				{
-					final IMacroCommand command=(IMacroCommand)object;
-					if (mustPost)
-					{
-						Display.getCurrent().asyncExec(new Runnable()
-						{
-							public void run()
-							{
-								if (!canContinue[0])
-									return;
-								MacroConsole.getConsole().writeln("--Executing command: "+command.getName(), MacroConsole.Type_PlayingCommand);
-								boolean succeeded=command.execute(editor);
-								if (!succeeded)
+								public void run()
 								{
-									//TODO: error message?
-									canContinue[0]=false;
+									updateMacroStack(wrapper);
 								}
-							}
-							
-						});
-					}
-					else
-					{
-						if (debugMode)
-						{
-							StyledText text=Utilities.getStyledText(editor);
-							List<MacroCommandDebugInfo> combinedDebugInfo=new ArrayList<MacroCommandDebugInfo>();
-							combinedDebugInfo.addAll(collectedDebugInfo);
-							for (int k=i;k<flattenedList.size();k++)
-							{
-								Object obj=flattenedList.get(k);
-								if (obj instanceof IMacroCommand)
-								{
-									combinedDebugInfo.add(new MacroCommandDebugInfo((IMacroCommand)obj));
-								}
-							}
-							MacroDebugDialog dlg=new MacroDebugDialog(Display.getCurrent().getActiveShell(), combinedDebugInfo, /*mLastDebugWindowLocation, mLastDebugWindowSize,*/ text);
-							dlg.open();
-							int selectedAction=dlg.getSelectedAction();
-							if (selectedAction==MacroDebugDialog.ACTION_CANCELEXECUTION)
-							{
-								break; //just kick out
-							}
-							else if (selectedAction==MacroDebugDialog.ACTION_CONTINUETOEND)
-							{
-								debugMode=false;
-							}
+								
+							});
 						}
-						MacroConsole.getConsole().writeln("--Executing command: "+command.getName(), MacroConsole.Type_PlayingCommand);
-						canContinue[0]=command.execute(editor);
-						if (!canContinue[0])
+						else
 						{
-							//TODO: error message?
+							updateMacroStack(wrapper);
+						}
+					}
+					else
+					{
+						final IMacroCommand command=(IMacroCommand)object;
+						if (mustPost)
+						{
+							Display.getCurrent().asyncExec(new Runnable()
+							{
+								public void run()
+								{
+									if (!canContinue[0])
+										return;
+									MacroConsole.getConsole().writeln("--Executing command: "+command.getName(), MacroConsole.Type_PlayingCommand);
+									boolean succeeded=command.execute(editor);
+									if (!succeeded)
+									{
+										//TODO: error message?
+										canContinue[0]=false;
+									}
+								}
+								
+							});
+						}
+						else
+						{
 							if (debugMode)
-							{}
-							break;
-						}
-						
-						if (debugMode)
-						{
-							//patch my list of commands with the proper info
-							StyledText text=Utilities.getStyledText(editor);
-							Point selRange=text.getSelection();
-							int caretPos=text.getCaretOffset();
-							Point cursorPos=new Point(0,0);
-							Point selEndPos=new Point(0,0);
-							if (selRange.x<selRange.y) //if there is a selection
 							{
-								if (caretPos==selRange.x)
+								StyledText text=Utilities.getStyledText(editor);
+								List<MacroCommandDebugInfo> combinedDebugInfo=new ArrayList<MacroCommandDebugInfo>();
+								combinedDebugInfo.addAll(collectedDebugInfo);
+								for (int k=i;k<flattenedList.size();k++)
 								{
-									translate(text, selRange.y, selEndPos);
+									Object obj=flattenedList.get(k);
+									if (obj instanceof IMacroCommand)
+									{
+										combinedDebugInfo.add(new MacroCommandDebugInfo((IMacroCommand)obj));
+									}
+								}
+								MacroDebugDialog dlg=new MacroDebugDialog(Display.getCurrent().getActiveShell(), combinedDebugInfo, /*mLastDebugWindowLocation, mLastDebugWindowSize,*/ text);
+								dlg.open();
+								int selectedAction=dlg.getSelectedAction();
+								if (selectedAction==MacroDebugDialog.ACTION_CANCELEXECUTION)
+								{
+									break; //just kick out
+								}
+								else if (selectedAction==MacroDebugDialog.ACTION_CONTINUETOEND)
+								{
+									debugMode=false;
+								}
+							}
+							MacroConsole.getConsole().writeln("--Executing command: "+command.getName(), MacroConsole.Type_PlayingCommand);
+							canContinue[0]=command.execute(editor);
+							if (!canContinue[0])
+							{
+								//TODO: error message?
+								if (debugMode)
+								{}
+								break;
+							}
+							
+							if (debugMode)
+							{
+								//patch my list of commands with the proper info
+								StyledText text=Utilities.getStyledText(editor);
+								Point selRange=text.getSelection();
+								int caretPos=text.getCaretOffset();
+								Point cursorPos=new Point(0,0);
+								Point selEndPos=new Point(0,0);
+								if (selRange.x<selRange.y) //if there is a selection
+								{
+									if (caretPos==selRange.x)
+									{
+										translate(text, selRange.y, selEndPos);
+									}
+									else
+									{
+										translate(text, selRange.x, selEndPos);
+									}
 								}
 								else
 								{
-									translate(text, selRange.x, selEndPos);
+									selEndPos=null;
 								}
-							}
-							else
-							{
-								selEndPos=null;
-							}
-							translate(text, caretPos, cursorPos);
-							MacroCommandDebugInfo newInfo=new MacroCommandDebugInfo(command, cursorPos, selEndPos);
-							collectedDebugInfo.add(newInfo);
-							MacroConsole.getConsole().writeln("--After command, cursor at: Line "+cursorPos.x+", Column "+cursorPos.y, MacroConsole.Type_DebugInfo);
-							if (selEndPos==null)
-							{
-								MacroConsole.getConsole().writeln("--After command, there is no selection", MacroConsole.Type_DebugInfo);
-							}
-							else
-							{
-								MacroConsole.getConsole().writeln("--After command, the selection pivot point is at: Line "+selEndPos.x+", Column "+selEndPos.y, MacroConsole.Type_DebugInfo);
+								translate(text, caretPos, cursorPos);
+								MacroCommandDebugInfo newInfo=new MacroCommandDebugInfo(command, cursorPos, selEndPos);
+								collectedDebugInfo.add(newInfo);
+								MacroConsole.getConsole().writeln("--After command, cursor at: Line "+cursorPos.x+", Column "+cursorPos.y, MacroConsole.Type_DebugInfo);
+								if (selEndPos==null)
+								{
+									MacroConsole.getConsole().writeln("--After command, there is no selection", MacroConsole.Type_DebugInfo);
+								}
+								else
+								{
+									MacroConsole.getConsole().writeln("--After command, the selection pivot point is at: Line "+selEndPos.x+", Column "+selEndPos.y, MacroConsole.Type_DebugInfo);
+								}
 							}
 						}
 					}
 				}
-			}
-			
-			if (mustPost)
-			{
-				Display.getCurrent().asyncExec(new Runnable()
+				
+				if (mustPost)
 				{
-					public void run()
+					Display.getCurrent().asyncExec(new Runnable()
 					{
-						MacroManager.getManager().clearMacroStack();
-						document.removeDocumentListener(markUpdater);
-						MacroConsole.getConsole().writeln("--Finished executing macro: "+getID(), MacroConsole.Type_PlayingCommand);
-					}
-				});
+						public void run()
+						{
+							MacroManager.getManager().clearMacroStack();
+							document.removeDocumentListener(markUpdater);
+							MacroConsole.getConsole().writeln("--Finished executing macro: "+getID(), MacroConsole.Type_PlayingCommand);
+						}
+					});
+				}
+				else
+				{
+					MacroManager.getManager().clearMacroStack();
+					document.removeDocumentListener(markUpdater);
+					MacroConsole.getConsole().writeln("--Finished executing macro: "+getID(), MacroConsole.Type_PlayingCommand);
+				}
 			}
-			else
+			catch (Exception e)
 			{
-				MacroManager.getManager().clearMacroStack();
-				document.removeDocumentListener(markUpdater);
-				MacroConsole.getConsole().writeln("--Finished executing macro: "+getID(), MacroConsole.Type_PlayingCommand);
+				e.printStackTrace();
+				MacroConsole.getConsole().write("Failed to run command with the following exception: ", MacroConsole.Type_Error);
+				MacroConsole.getConsole().write(e, MacroConsole.Type_Error);
 			}
 		}
-		catch (Exception e)
+		finally
 		{
-			e.printStackTrace();
-			MacroConsole.getConsole().write("Failed to run command with the following exception: ", MacroConsole.Type_Error);
-			MacroConsole.getConsole().write(e, MacroConsole.Type_Error);
+			Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_WriteToMacroConsole, saveWriteMode);
+			
+			if (atomicExecution && viewExtension!=null)
+			{
+				viewExtension.getRewriteTarget().endCompoundChange();
+			}
 		}
 		
 	}
@@ -274,6 +321,8 @@ public class EditorMacro {
 				if (macro!=null)
 				{
 					macro.flattenMacro(flattenedList);
+					if (flattenedList.size()>mMaxMacroSize)
+						return;
 				}
 				else
 				{
@@ -364,6 +413,7 @@ public class EditorMacro {
 		mCommands.addAll(existingMacro.mCommands);
 		mLastUse=existingMacro.mLastUse;
 		mIsContributed=existingMacro.mIsContributed;
+		mRunAsCompoundEvent=existingMacro.mRunAsCompoundEvent;
 	}
 
 	@Override
@@ -479,5 +529,46 @@ public class EditorMacro {
 			buffer.append(getID());
 		return buffer.toString();
 	}
-	
+
+	public static List<IMacroCommand> compressStringInsertions(List<IMacroCommand> commands)
+	{
+		List<IMacroCommand> newCommands=new ArrayList<IMacroCommand>();
+		InsertStringCommand lastCommand=null;
+		for (IMacroCommand macroCommand : commands)
+		{
+			if (macroCommand instanceof InsertStringCommand)
+			{
+				InsertStringCommand anotherCommand=(InsertStringCommand)macroCommand;
+				if (lastCommand!=null)
+				{
+					boolean success=lastCommand.combineWith(anotherCommand);
+					if (!success)
+					{
+						lastCommand=anotherCommand;
+					}
+					else
+					{
+						//we've combined the data for this command, so this is the only
+						//case where we don't add the command to the list we're building.
+						continue;
+					}
+				}
+				else
+				{
+					lastCommand=anotherCommand;
+				}
+			}
+			else
+			{
+				if (lastCommand!=null)
+				{
+					lastCommand=null;
+				}
+			}
+			
+			newCommands.add(macroCommand);
+		}
+		
+		return newCommands;
+	}
 }

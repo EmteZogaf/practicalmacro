@@ -192,6 +192,7 @@ public class SaveMacroDialog extends TitleAreaDialog
 			System.out.println("Save temp macro as :"+mName.getText());
 		}
 		
+		mResultMacro.setRunAsCompoundEvent(Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_ExecuteMacrosAtomically));
 		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_ShowSaveDialogAfterRecording, mShowDialogCheck.getSelection());
 		super.okPressed();
 	}

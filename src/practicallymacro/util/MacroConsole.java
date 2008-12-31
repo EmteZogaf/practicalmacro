@@ -75,6 +75,11 @@ public class MacroConsole extends IOConsole
 
 	public void write(String data, int type)
 	{
+		if (type!=Type_Error && type!=Type_DebugInfo && !Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_WriteToMacroConsole))
+		{
+			return;
+		}
+
 		if (Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_ShowMacroConsole))
 		{
 			ConsolePlugin.getDefault().getConsoleManager().showConsoleView(mConsole);

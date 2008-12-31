@@ -88,6 +88,7 @@ public class MacroManager
 	public static final String XML_Macro_Tag="Macro";
 	public static final String XML_Name_Tag="name";
 	public static final String XML_LastUsed_Attr="lastUsed";
+	public static final String XML_Compound_Attr="runAsCompound";
 	public static final String XML_ID_Tag="id";
 	public static final String XML_Description_Tag="description";
 	public static final String XML_Command_Tag="Command";
@@ -365,6 +366,7 @@ public class MacroManager
                 child.setAttribute(XML_Name_Tag, macro.getName());
                 child.setAttribute(XML_ID_Tag, macro.getID());
                 child.setAttribute(XML_LastUsed_Attr, Long.toString(macro.getLastUse()));
+                child.setAttribute(XML_Compound_Attr, Boolean.toString(macro.isRunAsCompoundEvent()));
                 Element descNode = doc.createElement(XML_Description_Tag);
                 child.appendChild(descNode);
                 descNode.setTextContent(macro.getDescription());
@@ -561,6 +563,7 @@ public class MacroManager
         		Element macroEl=(Element)macroNode;
         		String name=macroEl.getAttribute(XML_Name_Tag);
         		String id=macroEl.getAttribute(XML_ID_Tag);
+        		boolean runAsCompound=Boolean.parseBoolean(macroEl.getAttribute(XML_Compound_Attr));
         		String timeString=macroEl.getAttribute(XML_LastUsed_Attr);
         		String desc="";
         		NodeList macroChildren=macroNode.getChildNodes();
@@ -602,6 +605,7 @@ public class MacroManager
 	        		}
 	        		
         			EditorMacro newMacro=new EditorMacro(commands, id, name, desc);
+        			newMacro.setRunAsCompoundEvent(runAsCompound);
         			if (timeString.length()>0)
         			{
         				try

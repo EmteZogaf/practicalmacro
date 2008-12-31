@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorPart;
@@ -12,6 +11,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import practicallymacro.dialogs.InsertStringConfigureDlg;
 import practicallymacro.model.MacroManager;
 import practicallymacro.util.Utilities;
 
@@ -35,7 +35,7 @@ public class InsertStringCommand implements IMacroCommand
 	
 	public void dump()
 	{
-		System.out.println("Insert string: "+mData);
+		System.out.println(getName());
 	}
 
 	public boolean execute(final IEditorPart target)
@@ -105,7 +105,14 @@ public class InsertStringCommand implements IMacroCommand
 
 	public String getName()
 	{
-		return "Insert string: "+mData;
+		String printableData=mData;
+		if (printableData!=null)
+		{
+			printableData=printableData.replace("\r", "<return>");
+			printableData=printableData.replace("\n", "<return>");
+			printableData=printableData.replace("\t", "<tab>");
+		}
+		return "Insert string: "+printableData;
 	}
 
 	public String getCategory()
@@ -115,10 +122,10 @@ public class InsertStringCommand implements IMacroCommand
 
 	public void configure(Shell shell)
 	{
-		InputDialog dlg=new InputDialog(shell, "Insert String", "Enter string to insert", mData, null);
+		InsertStringConfigureDlg dlg=new InsertStringConfigureDlg(shell, mData);
 		if (dlg.open()==Dialog.OK)
 		{
-			mData=dlg.getValue();
+			mData=dlg.getText();
 		}
 	}
 
@@ -140,6 +147,16 @@ public class InsertStringCommand implements IMacroCommand
 	public boolean requiresPost()
 	{
 		return false;
+	}
+
+	public boolean combineWith(InsertStringCommand anotherCommand)
+	{
+		if (mData.indexOf('\n')>=0 || anotherCommand.mData.indexOf('\n')>=0 || mData.indexOf('\r')>=0 || anotherCommand.mData.indexOf('\r')>=0)
+			return false;
+		
+		//just concatenate the 2 strings
+		mData+=anotherCommand.mData;
+		return true;
 	}
 	
 }

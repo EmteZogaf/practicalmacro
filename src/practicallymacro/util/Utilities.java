@@ -54,6 +54,7 @@ public class Utilities {
 		mEditCategories=new HashSet<String>();
 		mEditCategories.add(MacroManager.UserMacroCategoryID);
 		mEditCategories.add("org.eclipse.ui.category.edit");
+		mEditCategories.add("org.eclipse.ui.category.textEditor");
 		mEditCategories.add("org.eclipse.jdt.ui.category.source");
 		mEditCategories.add("org.eclipse.jdt.ui.category.refactoring");
 		mEditCategories.add(MacroManager.MacroCommandCategoryID);
@@ -399,12 +400,17 @@ public class Utilities {
 		return false;
 	}
 
-	public static boolean isUserMacro(IMacroCommand macroCommand)
+	public static boolean isUserMacroCategory(String categoryID)
 	{
-		if (macroCommand.getCategoryID().equals(MacroManager.UserMacroCategoryID))
+		if (categoryID.equals(MacroManager.UserMacroCategoryID))
 			return true;
 		
 		return false;
+	}
+	
+	public static boolean isUserMacro(IMacroCommand macroCommand)
+	{
+		return isUserMacroCategory(macroCommand.getCategoryID());
 	}
 	
 	public static IPreferenceStore getMainPreferenceStore()

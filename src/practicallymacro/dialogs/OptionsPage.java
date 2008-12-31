@@ -23,7 +23,10 @@ public class OptionsPage extends PreferencePage implements
 
 	private Button mRecordRawChars;
 	private Button mShowMacroConsole;
+	private Button mWriteToMacroConsole;
 	private Button mShowSaveDialog;
+	private Button mCompressCharInserts;
+	private Button mExecuteMacrosAtomically;
 //	private Text mBaseScriptText;
 	private Spinner mMaxTempMacroSpinner;
 	
@@ -51,13 +54,28 @@ public class OptionsPage extends PreferencePage implements
 		
 		mRecordRawChars=new Button(comp, SWT.CHECK);
 		mRecordRawChars.setText("Record raw character events (not recommended)");
-		mRecordRawChars.setToolTipText("If set, raw keyup/down events will be recorded into the macro.\n  This allows the capturing of processing of special events like adding matching quotes.");
+		mRecordRawChars.setToolTipText("If set, raw keyup/down events will be recorded into the macro.\n  This allows the capturing of processing of special events like adding matching quotes.\nNote: Many options on this page will be ignored for macros containing raw character events.");
 		mRecordRawChars.setSelection(Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_RecordRawCharacterKeys));
+		
+		mCompressCharInserts=new Button(comp, SWT.CHECK);
+		mCompressCharInserts.setText("Compress character insertions into String insertions while recording");
+		mCompressCharInserts.setToolTipText("If set, String events will be created in place of individual character inserts when recording.");
+		mCompressCharInserts.setSelection(Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_CompressCharInsertsWhenRecording));
+		
+		mExecuteMacrosAtomically=new Button(comp, SWT.CHECK);
+		mExecuteMacrosAtomically.setText("Execute macros atomically");
+		mExecuteMacrosAtomically.setToolTipText("If set, execute macros as an atomic editor command.  This can be overridden per macro.  This is the recommended behavior for most editor macros since undo/redo will treat the macro as one event.");
+		mExecuteMacrosAtomically.setSelection(Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_ExecuteMacrosAtomically));
 		
 		mShowMacroConsole=new Button(comp, SWT.CHECK);
 		mShowMacroConsole.setText("Show macro console");
 		mShowMacroConsole.setToolTipText("If set, make the macro console visible during command record/play.");
 		mShowMacroConsole.setSelection(Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_ShowMacroConsole));
+		
+		mWriteToMacroConsole=new Button(comp, SWT.CHECK);
+		mWriteToMacroConsole.setText("Write to macro console");
+		mWriteToMacroConsole.setToolTipText("If set, write normal macro execution trace statements to the macro console during command record/play.");
+		mWriteToMacroConsole.setSelection(Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_WriteToMacroConsole));
 		
 		mShowSaveDialog=new Button(comp, SWT.CHECK);
 		mShowSaveDialog.setText("Show save dialog");
@@ -96,7 +114,10 @@ public class OptionsPage extends PreferencePage implements
 	{
 		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_RecordRawCharacterKeys, mRecordRawChars.getSelection());
 		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_ShowMacroConsole, mShowMacroConsole.getSelection());
+		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_WriteToMacroConsole, mWriteToMacroConsole.getSelection());
 		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_ShowSaveDialogAfterRecording, mShowSaveDialog.getSelection());
+		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_CompressCharInsertsWhenRecording, mCompressCharInserts.getSelection());
+		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_ExecuteMacrosAtomically, mExecuteMacrosAtomically.getSelection());
 //		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_DefaultScriptContents, mBaseScriptText.getText());
 		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_MaximumTempMacroCount, mMaxTempMacroSpinner.getSelection());
 		return super.performOk();
@@ -107,6 +128,9 @@ public class OptionsPage extends PreferencePage implements
 	{
 		mRecordRawChars.setSelection(Activator.getDefault().getPreferenceStore().getDefaultBoolean(Initializer.Pref_RecordRawCharacterKeys));
 		mShowMacroConsole.setSelection(Activator.getDefault().getPreferenceStore().getDefaultBoolean(Initializer.Pref_ShowMacroConsole));
+		mWriteToMacroConsole.setSelection(Activator.getDefault().getPreferenceStore().getDefaultBoolean(Initializer.Pref_WriteToMacroConsole));
+		mCompressCharInserts.setSelection(Activator.getDefault().getPreferenceStore().getDefaultBoolean(Initializer.Pref_CompressCharInsertsWhenRecording));
+		mExecuteMacrosAtomically.setSelection(Activator.getDefault().getPreferenceStore().getDefaultBoolean(Initializer.Pref_ExecuteMacrosAtomically));
 		mShowSaveDialog.setSelection(Activator.getDefault().getPreferenceStore().getDefaultBoolean(Initializer.Pref_ShowSaveDialogAfterRecording));
 //		mBaseScriptText.setText(Activator.getDefault().getPreferenceStore().getDefaultString(Initializer.Pref_DefaultScriptContents));
 		mMaxTempMacroSpinner.setSelection(Activator.getDefault().getPreferenceStore().getDefaultInt(Initializer.Pref_MaximumTempMacroCount));

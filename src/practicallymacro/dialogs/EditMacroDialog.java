@@ -55,10 +55,12 @@ public class EditMacroDialog extends TitleAreaDialog
 	private Button mMoveUpButton;
 	private Button mMoveDownButton;
 	private Table mCommandTable;
+	private Button mCompressButton;
 	
 	private Text mMacroDescriptionText;
 	private Text mIDText;
 	private Text mNameText;
+	private Button mRunAsCompoundButton;
 	
 	private Button mFilterNonEditorCommands;
 	private Button mFilterNonMacroCommands;
@@ -369,6 +371,20 @@ public class EditMacroDialog extends TitleAreaDialog
 			}
 		});
 		
+		mCompressButton=new Button(buttonComp, SWT.PUSH);
+		mCompressButton.setText("Compress strings");
+		mCompressButton.addSelectionListener(new SelectionAdapter()
+		{
+			@Override
+			public void widgetSelected(SelectionEvent e)
+			{
+				mCommands=EditorMacro.compressStringInsertions(mCommands);
+				updateCommandTable();
+				updateButtons();
+			}
+		});
+		
+		
 		Group idComp=new Group(comp, SWT.None);
 		idComp.setLayout(new GridLayout(2, false));
 		idComp.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -414,6 +430,11 @@ public class EditMacroDialog extends TitleAreaDialog
 		if (mExistingMacro!=null)
 			mMacroDescriptionText.setText(mExistingMacro.getDescription());
 		mMacroDescriptionText.setEditable(!mReadOnly);
+		
+		mRunAsCompoundButton=new Button(comp, SWT.CHECK);
+		mRunAsCompoundButton.setText("Run macro as a compound edit");
+		mRunAsCompoundButton.setToolTipText("If checked, run macro as a compound editor operation.  This means that a subsequent Undo will undo edits for the entire operation.  Normally, this should be checked unless it causes problems.");
+		mRunAsCompoundButton.setSelection(mExistingMacro==null || mExistingMacro.isRunAsCompoundEvent());
 		return comp;
 	}
 	
@@ -607,6 +628,7 @@ public class EditMacroDialog extends TitleAreaDialog
 	{
 		//build result macro
 		mResultMacro=new EditorMacro(mCommands, mIDText.getText(), mNameText.getText(), mMacroDescriptionText.getText());
+		mResultMacro.setRunAsCompoundEvent(mRunAsCompoundButton.getSelection());
 		if (mExistingMacro!=null)
 			mResultMacro.setSessionID(mExistingMacro.getSessionID());
 		super.okPressed();
