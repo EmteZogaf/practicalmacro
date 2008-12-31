@@ -224,6 +224,7 @@ public class Utilities {
 		
 		if (key == SWT.CR || key==SWT.LF)
 		{
+//			return new EclipseCommand("org.eclipse.ui.edit.text.smartEnter");
 			return new InsertStringCommand(new String(new char[]{(char)key}));
 		}
 		
