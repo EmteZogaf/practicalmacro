@@ -32,7 +32,7 @@ public class InsertStringCommand implements IMacroCommand
 	public static final String XML_InsertStringType="InsertStringCommand";
 	
 	private String mData;
-	private MyTextChangeListener mTextChangeListener=new MyTextChangeListener();
+//	private MyTextChangeListener mTextChangeListener=new MyTextChangeListener();
 	private MyExtendedModifyListener mExtendedModifyListener=new MyExtendedModifyListener();
 	
 	public InsertStringCommand(String data)
@@ -84,7 +84,7 @@ public class InsertStringCommand implements IMacroCommand
 				int caretPos=widget.getCaretOffset();
 				int selSize=widget.getSelectionCount();
 				StyledTextContent content=widget.getContent();
-				if (content!=null && mData.length()>1)
+				if (content!=null && (mData.length()>1))// || (mData.length()==1 && mData.charAt(0)!='\r')))
 				{
 					try
 					{
@@ -98,20 +98,9 @@ public class InsertStringCommand implements IMacroCommand
 //						content.removeTextChangeListener(mTextChangeListener);
 					}
 				}
-				
-//				IDocument doc=Utilities.getIDocumentForEditor(target);
-//				if (doc!=null && mData.length()>1)
-//				{
-//					try {
-//						doc.replace(caretPos, selSize, mData);
-//						widget.setCaretOffset(caretPos+mData.length()-selSize);
-//					} catch (BadLocationException e) {
-//						MacroConsole.getConsole().write(e);
-//						return false;
-//					}
-//				}
 				else
 				{
+					//want to allow single characters through so that we get good behavior from \r, '{', etc.
 					try
 					{
 						widget.addExtendedModifyListener(mExtendedModifyListener);
@@ -133,39 +122,38 @@ public class InsertStringCommand implements IMacroCommand
 		return false;
 	}
 	
-	private static class MyTextChangeListener implements TextChangeListener
-	{
-		private StyledText mWidget;
-		private int mCaretPos;
-		public void setWidget(StyledText widget)
-		{
-			mWidget=widget;
-		}
-		public void textChanged(TextChangedEvent event)
-		{
-//			mCaretPos=event.mWidget.getCaretOffset();
-		}
-
-		public void textChanging(TextChangingEvent event)
-		{
-			//nothing to do
-		}
-
-		public void textSet(TextChangedEvent event)
-		{
-			
-		}
-		
-		public int getCaretOffset()
-		{
-			return mCaretPos;
-		}
-	}
+//	private static class MyTextChangeListener implements TextChangeListener
+//	{
+//		private StyledText mWidget;
+//		private int mCaretPos;
+//		public void setWidget(StyledText widget)
+//		{
+//			mWidget=widget;
+//		}
+//		public void textChanged(TextChangedEvent event)
+//		{
+////			mCaretPos=event.mWidget.getCaretOffset();
+//		}
+//
+//		public void textChanging(TextChangingEvent event)
+//		{
+//			//nothing to do
+//		}
+//
+//		public void textSet(TextChangedEvent event)
+//		{
+//			
+//		}
+//		
+//		public int getCaretOffset()
+//		{
+//			return mCaretPos;
+//		}
+//	}
 	
 	private static class MyExtendedModifyListener implements ExtendedModifyListener
 	{
 		private int mCaretPos;
-		@Override
 		public void modifyText(ExtendedModifyEvent event)
 		{
 			mCaretPos=event.start+event.length;
@@ -215,7 +203,14 @@ public class InsertStringCommand implements IMacroCommand
 
 	public String getDescription()
 	{
-		return "Insert the string in to the document at the current caret location";
+		StringBuffer buffer=new StringBuffer();
+		buffer.append("Insert the string into the document at the current caret location");
+		if (mData!=null)
+		{
+			buffer.append("\n");
+			buffer.append(getName());
+		}
+		return buffer.toString();
 	}
 
 	public String getName()
