@@ -320,7 +320,13 @@ public class MacroDefinitionsPage extends PreferencePage implements
 					{
 						TableItem tableItem = selItems[i];
 						EditorMacro oldMacro=(EditorMacro)tableItem.getData();
-						EditorMacro copiedMacro=new EditorMacro(oldMacro.getCommands(), oldMacro.getID()+".copy", oldMacro.getName()+" (copy)", oldMacro.getDescription());
+						List<IMacroCommand> oldCommands=oldMacro.getCommands();
+						List<IMacroCommand> newCommands=new ArrayList<IMacroCommand>();
+						for (IMacroCommand macroCommand : oldCommands)
+						{
+							newCommands.add(macroCommand.copy());
+						}
+						EditorMacro copiedMacro=new EditorMacro(newCommands, oldMacro.getID()+".copy", oldMacro.getName()+" (copy)", oldMacro.getDescription());
 						mAllMacros.put(getNextUniqueID(), copiedMacro);
 					}
 					rebuildMacroTable();
