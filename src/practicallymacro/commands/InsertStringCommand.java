@@ -4,7 +4,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.ITextViewerExtension2;
+import org.eclipse.swt.custom.ExtendedModifyEvent;
+import org.eclipse.swt.custom.ExtendedModifyListener;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.custom.StyledTextContent;
+import org.eclipse.swt.custom.TextChangeListener;
+import org.eclipse.swt.custom.TextChangedEvent;
+import org.eclipse.swt.custom.TextChangingEvent;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorPart;
 import org.w3c.dom.Document;
@@ -13,6 +22,7 @@ import org.w3c.dom.NodeList;
 
 import practicallymacro.dialogs.InsertStringConfigureDlg;
 import practicallymacro.model.MacroManager;
+import practicallymacro.util.MacroConsole;
 import practicallymacro.util.Utilities;
 
 
@@ -22,6 +32,9 @@ public class InsertStringCommand implements IMacroCommand
 	public static final String XML_InsertStringType="InsertStringCommand";
 	
 	private String mData;
+	private MyTextChangeListener mTextChangeListener=new MyTextChangeListener();
+	private MyExtendedModifyListener mExtendedModifyListener=new MyExtendedModifyListener();
+	
 	public InsertStringCommand(String data)
 	{
 		mData=data;
@@ -56,15 +69,117 @@ public class InsertStringCommand implements IMacroCommand
 			StyledText widget=Utilities.getStyledText(target);
 			if (widget!=null)
 			{
+				//I've had to hack to prevent problems with auto-edits.  The problem with just inserting
+				//into the styled text widget is that a string with more than one character is treated
+				//like a "paste", and in the Java editor, for instance, the paste will adjust the
+				//leading whitespace on the current line.  Therefore the amount of text actually inserted
+				//will not match the original string and setting the caret offset will be off.  Also,
+				//I might have compressed the string, so the result from inserting individual chars 
+				//(which is what the user actually typed) wouldn't match the results from a string
+				//insertion.  Also, there is a flag in the styled widget that would keep the caret updated
+				//but it's not publicly available in the api.  The fix seems to be to insert >1 length
+				//strings directly into the styledTextContent, which bypasses any auto
+				//indent strategy that might be set on the viewer.  I don't think I want to always do
+				//this because I *do* want to get autoindent behavior for \n insertions.
 				int caretPos=widget.getCaretOffset();
 				int selSize=widget.getSelectionCount();
-				widget.insert(mData);
-				widget.setCaretOffset(caretPos+mData.length()-selSize);
+				StyledTextContent content=widget.getContent();
+				if (content!=null && mData.length()>1)
+				{
+					try
+					{
+//						content.addTextChangeListener(mTextChangeListener);
+						content.replaceTextRange(caretPos, selSize, mData);
+						widget.setCaretOffset(caretPos+mData.length()-selSize);
+//						widget.setCaretOffset(mTextChangeListener.getCaretOffset());
+					}
+					finally
+					{
+//						content.removeTextChangeListener(mTextChangeListener);
+					}
+				}
+				
+//				IDocument doc=Utilities.getIDocumentForEditor(target);
+//				if (doc!=null && mData.length()>1)
+//				{
+//					try {
+//						doc.replace(caretPos, selSize, mData);
+//						widget.setCaretOffset(caretPos+mData.length()-selSize);
+//					} catch (BadLocationException e) {
+//						MacroConsole.getConsole().write(e);
+//						return false;
+//					}
+//				}
+				else
+				{
+					try
+					{
+						widget.addExtendedModifyListener(mExtendedModifyListener);
+						mExtendedModifyListener.clearCaret();
+						widget.insert(mData);
+//						widget.setCaretOffset(caretPos+mData.length()-selSize);
+						if (mExtendedModifyListener.getCaretOffset()>=0)
+							widget.setCaretOffset(mExtendedModifyListener.getCaretOffset());
+					}
+					finally
+					{
+						widget.removeExtendedModifyListener(mExtendedModifyListener);
+					}
+				}
 				return true;
 			}
 		}
 		
 		return false;
+	}
+	
+	private static class MyTextChangeListener implements TextChangeListener
+	{
+		private StyledText mWidget;
+		private int mCaretPos;
+		public void setWidget(StyledText widget)
+		{
+			mWidget=widget;
+		}
+		public void textChanged(TextChangedEvent event)
+		{
+//			mCaretPos=event.mWidget.getCaretOffset();
+		}
+
+		public void textChanging(TextChangingEvent event)
+		{
+			//nothing to do
+		}
+
+		public void textSet(TextChangedEvent event)
+		{
+			
+		}
+		
+		public int getCaretOffset()
+		{
+			return mCaretPos;
+		}
+	}
+	
+	private static class MyExtendedModifyListener implements ExtendedModifyListener
+	{
+		private int mCaretPos;
+		@Override
+		public void modifyText(ExtendedModifyEvent event)
+		{
+			mCaretPos=event.start+event.length;
+		}
+		
+		public void clearCaret()
+		{
+			mCaretPos=(-1);
+		}
+
+		public int getCaretOffset()
+		{
+			return mCaretPos;
+		}
 	}
 
 	public void persist(Document doc, Element commandElement)
