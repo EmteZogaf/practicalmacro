@@ -26,9 +26,13 @@
                style="pulldown"
                toolbarPath="Normal/additions"
                tooltip="Play Macro">
-            <enablement>
-               <objectClass name="org.eclipse.jface.text.ITextSelection"/>
+<!--            <enablement>
+            	<or>
+               		<objectClass name="org.eclipse.jface.text.ITextSelection"/>
+               		<objectClass name="org.eclipse.core.resources.IFile"/>
+               	</or>
             </enablement>
+            -->
           </action>
          <action
                class="practicallymacro.actions.QuickExecuteAction"
@@ -41,9 +45,11 @@
                style="push"
                toolbarPath="Normal/additions"
                tooltip="Quick play a command">
-            <enablement>
-               <objectClass name="org.eclipse.jface.text.ITextSelection"/>
-            </enablement>
+            <!--<enablement>
+            	<or>
+               		<objectClass name="org.eclipse.jface.text.ITextSelection"/>
+               	</or>
+            </enablement>-->
          </action>
          <action
                class="practicallymacro.actions.RecordCommandAction"
@@ -56,11 +62,11 @@
                style="push"
                toolbarPath="Normal/additions"
                tooltip="Record Macro">
-            <enablement>
-               <objectClass
-                     name="org.eclipse.jface.text.ITextSelection">
-               </objectClass>
-            </enablement>
+            <!--<enablement>
+            	<or>
+               		<objectClass name="org.eclipse.jface.text.ITextSelection"/>
+               	</or>
+            </enablement>-->
          </action>
       </actionSet>
    </extension>

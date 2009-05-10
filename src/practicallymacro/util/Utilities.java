@@ -67,15 +67,17 @@ public class Utilities {
 		IEditorPart editor = null;
 		
 		// find the active part
-		IWorkbenchWindow window = 
-			PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		IPartService partService = window.getPartService();
-		IWorkbenchPart part = partService.getActivePart();
-		
-		// Is the part an editor?
-		if (part instanceof IEditorPart) {
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		if (window!=null)
+		{
+			IPartService partService = window.getPartService();
+			IWorkbenchPart part = partService.getActivePart();
 			
-			editor = (IEditorPart) part;
+			// Is the part an editor?
+			if (part instanceof IEditorPart) {
+				
+				editor = (IEditorPart) part;
+			}
 		}
 		
 		return editor;

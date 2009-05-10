@@ -29,6 +29,7 @@ public class OptionsPage extends PreferencePage implements
 	private Button mExecuteMacrosAtomically;
 //	private Text mBaseScriptText;
 	private Spinner mMaxTempMacroSpinner;
+	private Button mAllowAuditing;
 	
 	public OptionsPage() {
 		// TODO Auto-generated constructor stub
@@ -92,6 +93,11 @@ public class OptionsPage extends PreferencePage implements
 		mMaxTempMacroSpinner.setMaximum(500);
 		mMaxTempMacroSpinner.setSelection(Activator.getDefault().getPreferenceStore().getInt(Initializer.Pref_MaximumTempMacroCount));
 		
+		mAllowAuditing=new Button(comp, SWT.CHECK);
+		mAllowAuditing.setText("Allow logging of usage info to remote server");
+		mAllowAuditing.setToolTipText("If checked, a random sampling of macro operations will be logged to a remote server so I can see who is using it and what version of Eclipse etc. is being run.");
+		mAllowAuditing.setSelection(Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_CaptureStats));
+		
 //		Group g=new Group(comp, SWT.None);
 //		g.setText("Default script text");
 //		g.setLayout(new GridLayout());
@@ -120,6 +126,7 @@ public class OptionsPage extends PreferencePage implements
 		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_ExecuteMacrosAtomically, mExecuteMacrosAtomically.getSelection());
 //		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_DefaultScriptContents, mBaseScriptText.getText());
 		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_MaximumTempMacroCount, mMaxTempMacroSpinner.getSelection());
+		Activator.getDefault().getPreferenceStore().setValue(Initializer.Pref_CaptureStats, mAllowAuditing.getSelection());
 		return super.performOk();
 	}
 
@@ -134,6 +141,7 @@ public class OptionsPage extends PreferencePage implements
 		mShowSaveDialog.setSelection(Activator.getDefault().getPreferenceStore().getDefaultBoolean(Initializer.Pref_ShowSaveDialogAfterRecording));
 //		mBaseScriptText.setText(Activator.getDefault().getPreferenceStore().getDefaultString(Initializer.Pref_DefaultScriptContents));
 		mMaxTempMacroSpinner.setSelection(Activator.getDefault().getPreferenceStore().getDefaultInt(Initializer.Pref_MaximumTempMacroCount));
+		mAllowAuditing.setSelection(Activator.getDefault().getPreferenceStore().getDefaultBoolean(Initializer.Pref_CaptureStats));
 		super.performDefaults();
 	}
 

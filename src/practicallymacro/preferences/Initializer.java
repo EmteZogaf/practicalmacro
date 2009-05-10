@@ -13,6 +13,10 @@ public class Initializer extends AbstractPreferenceInitializer {
 	public static final String Pref_WriteToMacroConsole="PracticallyMacro_WriteToMacroConsole";
 	public static final String Pref_ExecuteMacrosAtomically="PracticallyMacro_ExecuteMacrosAtomically";
 	public static final String Pref_CompressCharInsertsWhenRecording="PracticallyMacro_CompressCharInsertsWhenRecording";
+
+	public static final String Pref_StatsURL="PracticallyMacro_StatsURL";
+	public static final String Pref_CaptureStats="PracticallyMacro_CaptureStatistics";
+	public static final String Pref_CaptureStatsPrompted="PracticallyMacro_AskedUserToCaptureStatistics";
 	
 	public static final String Pref_QuickPlayCommands="PracticallyMacro_QuickPlayCommands";
 	
@@ -30,6 +34,10 @@ public class Initializer extends AbstractPreferenceInitializer {
 		Activator.getDefault().getPreferenceStore().setDefault(Pref_ExecuteMacrosAtomically, true);
 		Activator.getDefault().getPreferenceStore().setDefault(Pref_CompressCharInsertsWhenRecording, true);
 		Activator.getDefault().getPreferenceStore().setDefault(Pref_QuickPlayCommands, "");
+		
+		Activator.getDefault().getPreferenceStore().setDefault(Pref_StatsURL, "");
+		Activator.getDefault().getPreferenceStore().setDefault(Pref_CaptureStats, true);
+		Activator.getDefault().getPreferenceStore().setDefault(Pref_CaptureStatsPrompted, false);
 	}
 
 }

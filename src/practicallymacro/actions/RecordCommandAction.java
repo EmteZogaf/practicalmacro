@@ -1,6 +1,8 @@
 package practicallymacro.actions;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ContributionItem;
@@ -29,6 +31,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
+import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.AbstractTextEditor;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.eclipse.ui.texteditor.IWorkbenchActionDefinitionIds;
@@ -84,6 +87,11 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 			if (styledText==null)
 				return;
 			
+			Map<String, String> audit=new HashMap<String, String>();
+			audit.put(Activator.Audit_Operation, Activator.Audit_Operation_Record);
+			audit.put(Activator.Audit_FileExtension, Activator.getExtension(editor));
+			Activator.logStatistics(audit);
+			
 			styledText.addDisposeListener(mDisposeListener);
 			
 			IStatusLineManager statusLineManager=editor.getEditorSite().getActionBars().getStatusLineManager();
@@ -108,6 +116,7 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 		else if (state == MacroManager.State_Recording)
 		{
 			shutDownRecorder();
+			
 //			if (mRecorder==null)
 //				return;
 //			
@@ -291,10 +300,9 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 
 	private void registerFindAction()
 	{
-		IEditorPart editor=mRecorder.getEditor();
-		if (editor instanceof AbstractTextEditor)
+		AbstractTextEditor ate=findTextEditor(mRecorder.getEditor());
+		if (ate!=null)
 		{
-			AbstractTextEditor ate = (AbstractTextEditor) editor;
 			mSavedFindAction=ate.getAction(ITextEditorActionConstants.FIND);
 			IAction macroFindAction=new MacroFindAction(mRecorder);
 			macroFindAction.setActionDefinitionId(IWorkbenchActionDefinitionIds.FIND_REPLACE);
@@ -305,12 +313,32 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 	
 	private static void unregisterFindAction()
 	{
-		IEditorPart editor=mRecorder.getEditor();
-		if (editor instanceof AbstractTextEditor)
+		AbstractTextEditor ate=findTextEditor(mRecorder.getEditor());
+		if (ate!=null)
 		{
-			AbstractTextEditor ate = (AbstractTextEditor) editor;
 			ate.setAction(ITextEditorActionConstants.FIND, mSavedFindAction);
 		}
+	}
+	
+	public static AbstractTextEditor findTextEditor(IEditorPart editor)
+	{
+		if (editor instanceof AbstractTextEditor)
+			return (AbstractTextEditor)editor;
+		
+		if (editor instanceof MultiPageEditorPart)
+		{
+			MultiPageEditorPart mpe=(MultiPageEditorPart)editor;
+			IEditorPart[] parts=mpe.findEditors(editor.getEditorInput());
+			for (IEditorPart editorPart : parts)
+			{
+				if (editorPart instanceof AbstractTextEditor)
+				{
+					return (AbstractTextEditor)editorPart;
+				}
+			}
+		}
+		
+		return null;
 	}
 
 	public static MacroRecorder getRecorder()

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowPulldownDelegate;
 import org.eclipse.ui.PlatformUI;
@@ -33,6 +35,7 @@ import org.eclipse.ui.commands.ICommandService;
 import practicallymacro.commands.EclipseCommand;
 import practicallymacro.dialogs.EditMacroDialog;
 import practicallymacro.dialogs.MacroDefinitionsPage;
+import practicallymacro.editormacros.Activator;
 import practicallymacro.model.EditorMacro;
 import practicallymacro.model.MacroManager;
 import practicallymacro.util.Utilities;
@@ -58,7 +61,13 @@ public class PlayDropdownAction implements IWorkbenchWindowPulldownDelegate
 		EditorMacro macro=MacroManager.getManager().getLastMacro();
 		if (macro!=null)
 		{
-			macro.run(Utilities.getActiveEditor());
+			IEditorPart editor=Utilities.getActiveEditor();
+			macro.run(editor);
+			
+			Map<String, String> audit=new HashMap<String, String>();
+			audit.put(Activator.Audit_Operation, Activator.Audit_Operation_PlayLast);
+			audit.put(Activator.Audit_FileExtension, Activator.getExtension(editor));
+			Activator.logStatistics(audit);
 		}
 		else
 		{
@@ -222,7 +231,8 @@ public class PlayDropdownAction implements IWorkbenchWindowPulldownDelegate
 				//turn off command recording
 				MacroManager.getManager().getRecorder().pauseRecording();
 			}
-			mMacro.run(Utilities.getActiveEditor());
+			IEditorPart editor=Utilities.getActiveEditor();
+			mMacro.run(editor);
 			if (systemCommand!=null && MacroManager.getManager().getMacroState()==MacroManager.State_Recording)
 			{
 				//turn command recording back on
@@ -230,6 +240,10 @@ public class PlayDropdownAction implements IWorkbenchWindowPulldownDelegate
 				MacroManager.getManager().getRecorder().recordCommand(new EclipseCommand(mMacro.getID()));
 			}
 			
+			Map<String, String> audit=new HashMap<String, String>();
+			audit.put(Activator.Audit_Operation, Activator.Audit_Operation_PlaySaved);
+			audit.put(Activator.Audit_FileExtension, Activator.getExtension(editor));
+			Activator.logStatistics(audit);
 		}
 	}
 	
