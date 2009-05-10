@@ -4,16 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.text.BadLocationException;
-import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.ITextViewerExtension2;
 import org.eclipse.swt.custom.ExtendedModifyEvent;
 import org.eclipse.swt.custom.ExtendedModifyListener;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.StyledTextContent;
-import org.eclipse.swt.custom.TextChangeListener;
-import org.eclipse.swt.custom.TextChangedEvent;
-import org.eclipse.swt.custom.TextChangingEvent;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorPart;
 import org.w3c.dom.Document;
@@ -22,7 +16,6 @@ import org.w3c.dom.NodeList;
 
 import practicallymacro.dialogs.InsertStringConfigureDlg;
 import practicallymacro.model.MacroManager;
-import practicallymacro.util.MacroConsole;
 import practicallymacro.util.Utilities;
 
 
