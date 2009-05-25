@@ -202,11 +202,6 @@ public class PlayCommandDialog extends Dialog
 //					widget.removeExtendedModifyListener(MacroManager.getManager().getMarkUpdater());
 //					if (Activator.getDefault().getMacroState()==Activator.State_Idle)
 //						document.removeDocumentListener(MacroManager.getManager().getMarkUpdater());
-					
-					Map<String, String> audit=new HashMap<String, String>();
-					audit.put(Activator.Audit_Operation, Activator.Audit_Operation_PlayAny);
-					audit.put(Activator.Audit_FileExtension, Activator.getExtension(editor));
-					Activator.logStatistics(audit);
 				}
 				
 			});

@@ -45,11 +45,6 @@ public class QuickExecuteAction implements IWorkbenchWindowActionDelegate {
 				EclipseCommand command=new EclipseCommand(commandID);
 				IEditorPart editor=Utilities.getActiveEditor();
 				command.execute(editor);
-				
-				Map<String, String> audit=new HashMap<String, String>();
-				audit.put(Activator.Audit_Operation, Activator.Audit_Operation_QuickPlay);
-				audit.put(Activator.Audit_FileExtension, Activator.getExtension(editor));
-				Activator.logStatistics(audit);
 			}			
 		}
 	}

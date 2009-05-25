@@ -87,11 +87,6 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 			if (styledText==null)
 				return;
 			
-			Map<String, String> audit=new HashMap<String, String>();
-			audit.put(Activator.Audit_Operation, Activator.Audit_Operation_Record);
-			audit.put(Activator.Audit_FileExtension, Activator.getExtension(editor));
-			Activator.logStatistics(audit);
-			
 			styledText.addDisposeListener(mDisposeListener);
 			
 			IStatusLineManager statusLineManager=editor.getEditorSite().getActionBars().getStatusLineManager();

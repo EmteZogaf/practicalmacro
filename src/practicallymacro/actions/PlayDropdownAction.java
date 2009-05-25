@@ -63,11 +63,6 @@ public class PlayDropdownAction implements IWorkbenchWindowPulldownDelegate
 		{
 			IEditorPart editor=Utilities.getActiveEditor();
 			macro.run(editor);
-			
-			Map<String, String> audit=new HashMap<String, String>();
-			audit.put(Activator.Audit_Operation, Activator.Audit_Operation_PlayLast);
-			audit.put(Activator.Audit_FileExtension, Activator.getExtension(editor));
-			Activator.logStatistics(audit);
 		}
 		else
 		{
@@ -239,11 +234,6 @@ public class PlayDropdownAction implements IWorkbenchWindowPulldownDelegate
 				MacroManager.getManager().getRecorder().resumeRecording();
 				MacroManager.getManager().getRecorder().recordCommand(new EclipseCommand(mMacro.getID()));
 			}
-			
-			Map<String, String> audit=new HashMap<String, String>();
-			audit.put(Activator.Audit_Operation, Activator.Audit_Operation_PlaySaved);
-			audit.put(Activator.Audit_FileExtension, Activator.getExtension(editor));
-			Activator.logStatistics(audit);
 		}
 	}
 	
