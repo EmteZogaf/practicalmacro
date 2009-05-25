@@ -50,6 +50,7 @@ public class MacroRecorder implements Listener, IExecutionListener, IDocumentLis
 		mNonRecordableCommandIds.add("practicallymacro.actions.recordMacro");
 		mNonRecordableCommandIds.add("practicallymacro.actions.playCommand");
 		mNonRecordableCommandIds.add(IWorkbenchActionDefinitionIds.FIND_REPLACE);
+		mNonRecordableCommandIds.add("practicallymacro.actions.playLastMacro");
 	}
 	
 	public void start()
