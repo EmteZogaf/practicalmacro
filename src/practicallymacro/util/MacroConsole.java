@@ -5,6 +5,8 @@ import java.io.PrintStream;
 
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IViewReference;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IOConsole;
@@ -79,10 +81,24 @@ public class MacroConsole extends IOConsole
 		{
 			return;
 		}
-
+		
 		if (Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_ShowMacroConsole))
 		{
-			ConsolePlugin.getDefault().getConsoleManager().showConsoleView(mConsole);
+			try
+			{
+				IViewReference consoleView=PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findViewReference("org.eclipse.ui.console.ConsoleView");
+				if (consoleView!=null)
+				{
+					if (!consoleView.isFastView())
+					{
+						ConsolePlugin.getDefault().getConsoleManager().showConsoleView(mConsole);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
 		}
 		
 		IOConsoleOutputStream outputStream=mConsole.newOutputStream();
