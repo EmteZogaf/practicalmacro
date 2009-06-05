@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ExtendedModifyEvent;
 import org.eclipse.swt.custom.ExtendedModifyListener;
 import org.eclipse.swt.custom.StyledText;
@@ -98,8 +99,11 @@ public class InsertStringCommand implements IMacroCommand
 					{
 						widget.addExtendedModifyListener(mExtendedModifyListener);
 						mExtendedModifyListener.clearCaret();
-						widget.insert(mData);
-//						widget.setCaretOffset(caretPos+mData.length()-selSize);
+						String insertString=mData;
+						if (mData.equals("\r") || mData.equals("\n"))
+							insertString=widget.getLineDelimiter();
+						widget.insert(insertString);
+//						widget.setCaretOffset(caretPos+insertString.length()-selSize);
 						if (mExtendedModifyListener.getCaretOffset()>=0)
 							widget.setCaretOffset(mExtendedModifyListener.getCaretOffset());
 					}
@@ -211,8 +215,8 @@ public class InsertStringCommand implements IMacroCommand
 		String printableData=mData;
 		if (printableData!=null)
 		{
-			printableData=printableData.replace("\r", "<return>");
-			printableData=printableData.replace("\n", "<return>");
+			printableData=printableData.replace("\r", "<CR>");
+			printableData=printableData.replace("\n", "<LF>");
 			printableData=printableData.replace("\t", "<tab>");
 		}
 		return "Insert string: "+printableData;
