@@ -20,7 +20,7 @@
          <action
                class="practicallymacro.actions.PlayDropdownAction"
                definitionId="practicallymacro.actions.playLastMacro"
-               icon="icons/play.png"
+               icon="icons/play.gif"
                id="practicallymacro.actions.playMacroAction"
                label="&amp;Play Macro"
                style="pulldown"
@@ -37,7 +37,7 @@
          <action
                class="practicallymacro.actions.QuickExecuteAction"
                definitionId="practicallymacro.actions.quickExecuteCommand"
-               icon="icons/quickPlay.png"
+               icon="icons/quickplay.gif"
                id="practicallymacro.actions.quickExecuteCommandAction"
                label="&amp;Quick Play"
                retarget="false"
@@ -54,7 +54,7 @@
          <action
                class="practicallymacro.actions.RecordCommandAction"
                definitionId="practicallymacro.actions.recordMacro"
-               icon="icons/record.png"
+               icon="icons/record.gif"
                id="practicallymacro.actions.recordMacroAction"
                label="&amp;Record Macro"
                retarget="false"
