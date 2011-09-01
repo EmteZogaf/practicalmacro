@@ -35,6 +35,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
+import org.eclipse.ui.handlers.IHandlerService;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -290,6 +291,9 @@ public class MacroManager
 			Command newCommand=cs.getCommand(macro.getID());
 			newCommand.define(macro.getName(), macro.getDescription(), category);
 			newCommand.setHandler(new MacroHandler(macro.getID()));
+			IHandlerService hs=(IHandlerService) PlatformUI.getWorkbench().getAdapter(IHandlerService.class);
+			if (hs!=null)
+				hs.activateHandler(newCommand.getId(), newCommand.getHandler());
 		}
 		else
 		{
