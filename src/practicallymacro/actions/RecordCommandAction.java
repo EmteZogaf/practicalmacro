@@ -4,11 +4,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.commands.IHandler;
+import org.eclipse.core.expressions.EvaluationResult;
+import org.eclipse.core.expressions.Expression;
+import org.eclipse.core.expressions.ExpressionInfo;
+import org.eclipse.core.expressions.IEvaluationContext;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ContributionItem;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.jface.action.StatusLineLayoutData;
+import org.eclipse.jface.commands.ActionHandler;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.viewers.ISelection;
@@ -27,10 +34,13 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.ISources;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
+import org.eclipse.ui.handlers.IHandlerActivation;
+import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.AbstractTextEditor;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
@@ -295,24 +305,40 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 
 	private void registerFindAction()
 	{
-		AbstractTextEditor ate=findTextEditor(mRecorder.getEditor());
-		if (ate!=null)
+		//This is a hack.  It's not a hack to call activateHandler, but I need to make sure
+		//my version of the command is used, so I'm assigning it a high priority via
+		//the 'Expression'.  This is necessary starting in Juno, where they have 
+		//tweaked some of the command mapping code.
+		
+//		AbstractTextEditor ate=findTextEditor(mRecorder.getEditor());
+//		if (ate!=null)
 		{
-			mSavedFindAction=ate.getAction(ITextEditorActionConstants.FIND);
+//			mSavedFindAction=ate.getAction(ITextEditorActionConstants.FIND);
 			IAction macroFindAction=new MacroFindAction(mRecorder);
-			macroFindAction.setActionDefinitionId(IWorkbenchActionDefinitionIds.FIND_REPLACE);
-			ate.setAction(ITextEditorActionConstants.FIND, macroFindAction);
+//			macroFindAction.setActionDefinitionId(IWorkbenchActionDefinitionIds.FIND_REPLACE);
+////			ate.removeActionActivationCode(ITextEditorActionConstants.FIND);
+////			ate.setAction(ITextEditorActionConstants.FIND, null);
+//			ate.setAction(ITextEditorActionConstants.FIND, macroFindAction);
+			
+			IHandlerService hs = (IHandlerService) PlatformUI.getWorkbench().getAdapter(IHandlerService.class);
+			IHandler actionHandler = new ActionHandler(macroFindAction);
+			Expression expr=new HighPriorityExpression();
+			mFindReplaceHandler = hs.activateHandler(IWorkbenchActionDefinitionIds.FIND_REPLACE, actionHandler, expr);
 		}
 		
 	}
 	
+	private static IHandlerActivation mFindReplaceHandler=null;
+	
 	private static void unregisterFindAction()
 	{
-		AbstractTextEditor ate=findTextEditor(mRecorder.getEditor());
-		if (ate!=null)
-		{
-			ate.setAction(ITextEditorActionConstants.FIND, mSavedFindAction);
-		}
+		if (mFindReplaceHandler!=null)
+			mFindReplaceHandler.getHandlerService().deactivateHandler(mFindReplaceHandler);
+//		AbstractTextEditor ate=findTextEditor(mRecorder.getEditor());
+//		if (ate!=null)
+//		{
+//			ate.setAction(ITextEditorActionConstants.FIND, mSavedFindAction);
+//		}
 	}
 	
 	public static AbstractTextEditor findTextEditor(IEditorPart editor)
@@ -402,5 +428,64 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 		}
 	}
 
+	static class HighPriorityExpression extends Expression 
+	{
+//		private String id;
+//		private Set<String> partIds;
+
+		public HighPriorityExpression()//String id, Set<String> associatedPartIds) 
+		{
+//			this.id = id;
+//			this.partIds = associatedPartIds;
+		}
+
+		@Override
+		public void collectExpressionInfo(ExpressionInfo info) {
+			//assign some high-priority items to make sure I get picked
+			//up before the main findReplace command.  I don't know
+			//if these variables are used for anything other than assigning 
+			//priority.  If so, there might be some unintended side effects.
+			info.addVariableNameAccess(ISources.ACTIVE_CONTEXT_NAME);
+			info.addVariableNameAccess(ISources.ACTIVE_PART_ID_NAME);
+			info.addVariableNameAccess(ISources.ACTIVE_SITE_NAME);
+		}
+
+		@Override
+		public EvaluationResult evaluate(IEvaluationContext context) throws CoreException {
+			//if I understood more about this, I might try to match up the part id of the 
+			//editor etc.  As it is, I'm just allowing it to be invoked regardless.  This
+			//will only be available if a macro is currently being recorded, so the risk
+			//doesn't seem that high.
+			return EvaluationResult.TRUE;
+//			Object obj = context.getVariable(ISources.ACTIVE_CONTEXT_NAME);
+//			if (obj instanceof Collection<?>) {
+//				boolean rc = ((Collection) obj).contains(id);
+//				if (rc) {
+//					return EvaluationResult.TRUE;
+//				}
+//			}
+//			if (!partIds.isEmpty()) {
+//				return EvaluationResult.valueOf(partIds.contains(context
+//						.getVariable(ISources.ACTIVE_PART_ID_NAME)));
+//			}
+//			return EvaluationResult.FALSE;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (!(obj instanceof HighPriorityExpression)) {
+				return false;
+			}
+			return true;
+//			ActionSetAndPartExpression exp = (ActionSetAndPartExpression) obj;
+//			return id.equals(exp.id) && partIds.equals(exp.partIds);
+		}
+
+		@Override
+		public int hashCode() {
+			return 20;
+//			return id.hashCode() + partIds.hashCode();
+		}
+	}
 	
 }
