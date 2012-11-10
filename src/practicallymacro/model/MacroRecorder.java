@@ -19,10 +19,10 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IWorkbenchCommandConstants;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.keys.IBindingService;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
-import org.eclipse.ui.texteditor.IWorkbenchActionDefinitionIds;
 
 import practicallymacro.commands.EclipseCommand;
 import practicallymacro.commands.FindCommand;
@@ -49,7 +49,7 @@ public class MacroRecorder implements Listener, IExecutionListener, IDocumentLis
 		mNonRecordableCommandIds=new HashSet<String>();
 		mNonRecordableCommandIds.add("practicallymacro.actions.recordMacro");
 		mNonRecordableCommandIds.add("practicallymacro.actions.playCommand");
-		mNonRecordableCommandIds.add(IWorkbenchActionDefinitionIds.FIND_REPLACE);
+		mNonRecordableCommandIds.add(IWorkbenchCommandConstants.EDIT_FIND_AND_REPLACE);
 		mNonRecordableCommandIds.add("practicallymacro.actions.playLastMacro");
 	}
 	
@@ -141,7 +141,7 @@ public class MacroRecorder implements Listener, IExecutionListener, IDocumentLis
 		if (mNonRecordableCommandIds.contains(commandId))
 		{
 			//we *always" see the record command first, so don't log it
-			if (!commandId.equals("practicallymacro.actions.recordMacro") && !commandId.equals(IWorkbenchActionDefinitionIds.FIND_REPLACE))
+			if (!commandId.equals("practicallymacro.actions.recordMacro") && !commandId.equals(IWorkbenchCommandConstants.EDIT_FIND_AND_REPLACE))
 			{
 				MacroConsole.getConsole().writeln("Not recording command (it's in the exclude list): "+commandId, MacroConsole.Type_Standard);
 			}

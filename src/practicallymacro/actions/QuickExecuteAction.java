@@ -1,8 +1,5 @@
 package practicallymacro.actions;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.viewers.ISelection;
@@ -14,7 +11,6 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import practicallymacro.commands.EclipseCommand;
 import practicallymacro.dialogs.QuickExecuteDialog;
-import practicallymacro.editormacros.Activator;
 import practicallymacro.util.Utilities;
 
 public class QuickExecuteAction implements IWorkbenchWindowActionDelegate {

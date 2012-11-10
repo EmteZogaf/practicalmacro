@@ -1,8 +1,6 @@
 package practicallymacro.actions;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.commands.IHandler;
 import org.eclipse.core.expressions.EvaluationResult;
@@ -35,6 +33,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISources;
+import org.eclipse.ui.IWorkbenchCommandConstants;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
@@ -43,8 +42,6 @@ import org.eclipse.ui.handlers.IHandlerActivation;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.AbstractTextEditor;
-import org.eclipse.ui.texteditor.ITextEditorActionConstants;
-import org.eclipse.ui.texteditor.IWorkbenchActionDefinitionIds;
 
 import practicallymacro.commands.IMacroCommand;
 import practicallymacro.dialogs.SaveMacroDialog;
@@ -61,7 +58,7 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 {
 
 	private static MacroRecorder mRecorder=null;
-	private static IAction mSavedFindAction;
+//	private static IAction mSavedFindAction;
 	private static ContributionItem mRecordingWidget=null;
 	private static DisposeListener mDisposeListener=new DisposeListener()
 	{
@@ -121,46 +118,6 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 		else if (state == MacroManager.State_Recording)
 		{
 			shutDownRecorder();
-			
-//			if (mRecorder==null)
-//				return;
-//			
-//			IEditorPart editor=mRecorder.getEditor();
-//			IEditorPart currentEditor=Utilities.getActiveEditor();
-////			if (editor!=currentEditor)
-////			{
-////				MacroConsole.getConsole().writeln("Record-mode stop failed because editor has changed");
-////				return;
-////			}
-//			
-//			IStatusLineManager statusLineManager=currentEditor.getEditorSite().getActionBars().getStatusLineManager();
-//			removeStatusBarWidget(statusLineManager);
-//			
-//			StyledText styledText = Utilities.getStyledText(editor);
-//
-//			try {
-//				if (styledText!=null)
-//				{
-//					styledText.removeListener(SWT.KeyDown, mRecorder);
-//					styledText.removeListener(SWT.KeyUp, mRecorder);
-//					styledText.removeDisposeListener(mDisposeListener);
-//				}
-//
-//				IDocument document=Utilities.getIDocumentForEditor(editor);
-//				if (document!=null)
-//				{
-//					document.removeDocumentListener(mRecorder);
-//					document.removeDocumentListener(mRecorder.getMarkUpdater());
-//				}
-//
-//				ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
-//				cs.removeExecutionListener(mRecorder);
-//
-//				unregisterFindAction();
-//			}
-//			finally {
-//				shutDownRecorder();
-//			}
 		}
 	}
 
@@ -322,8 +279,11 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 			
 			IHandlerService hs = (IHandlerService) PlatformUI.getWorkbench().getAdapter(IHandlerService.class);
 			IHandler actionHandler = new ActionHandler(macroFindAction);
-			Expression expr=new HighPriorityExpression();
-			mFindReplaceHandler = hs.activateHandler(IWorkbenchActionDefinitionIds.FIND_REPLACE, actionHandler, expr);
+//			String id="org.eclipse.ui.textEditorScope";
+//			Set<String> partIDs=new HashSet<String>();
+//			partIDs.add("partID");
+			Expression expr=new HighPriorityExpression();//id, partIDs);
+			mFindReplaceHandler = hs.activateHandler(IWorkbenchCommandConstants.EDIT_FIND_AND_REPLACE, actionHandler, expr);
 		}
 		
 	}
@@ -433,7 +393,7 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 //		private String id;
 //		private Set<String> partIds;
 
-		public HighPriorityExpression()//String id, Set<String> associatedPartIds) 
+		public HighPriorityExpression() //String id, Set<String> associatedPartIds) 
 		{
 //			this.id = id;
 //			this.partIds = associatedPartIds;

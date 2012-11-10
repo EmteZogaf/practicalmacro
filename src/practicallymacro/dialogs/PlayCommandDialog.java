@@ -3,9 +3,7 @@ package practicallymacro.dialogs;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.commands.Command;
 import org.eclipse.jface.dialogs.Dialog;
@@ -26,14 +24,12 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 
 import practicallymacro.commands.EclipseCommand;
 import practicallymacro.commands.IMacroCommand;
 import practicallymacro.commands.TemporaryMacroCommand;
-import practicallymacro.editormacros.Activator;
 import practicallymacro.model.EditorMacro;
 import practicallymacro.model.MacroManager;
 import practicallymacro.util.MacroConsole;
@@ -182,7 +178,7 @@ public class PlayCommandDialog extends Dialog
 						MacroManager.getManager().getRecorder().pauseRecording();
 					}
 					
-					IEditorPart editor=Utilities.getActiveEditor();
+//					IEditorPart editor=Utilities.getActiveEditor();
 					for (int i=0;i<timesToExecute;i++)
 					{
 						boolean success=command.execute(Utilities.getActiveEditor());
