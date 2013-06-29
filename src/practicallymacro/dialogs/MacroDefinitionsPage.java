@@ -406,7 +406,7 @@ public class MacroDefinitionsPage extends PreferencePage implements
 				currentIDs.add(macro.getID());
 			}
 		}
-		ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		ICommandService cs = MacroManager.getOldCommandService();
 		Collection<String> allCommands=cs.getDefinedCommandIds();
 		for (String commandID : allCommands)
 		{

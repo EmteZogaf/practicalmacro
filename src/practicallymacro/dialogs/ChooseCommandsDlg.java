@@ -27,6 +27,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 
+import practicallymacro.model.MacroManager;
 import practicallymacro.util.Utilities;
 
 public class ChooseCommandsDlg extends Dialog
@@ -142,7 +143,7 @@ public class ChooseCommandsDlg extends Dialog
 		});
 		
 		
-		final ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		final ICommandService cs = MacroManager.getOldCommandService();
 		Command[] allCommands=cs.getDefinedCommands();
 		Set<String> filteredIDs=new HashSet<String>();
 		for (Command c : mFilteredCommands)

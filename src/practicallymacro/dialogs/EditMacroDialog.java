@@ -38,6 +38,7 @@ import practicallymacro.commands.EclipseCommand;
 import practicallymacro.commands.IMacroCommand;
 import practicallymacro.editormacros.Activator;
 import practicallymacro.model.EditorMacro;
+import practicallymacro.model.MacroManager;
 import practicallymacro.util.Utilities;
 
 
@@ -473,7 +474,7 @@ public class EditMacroDialog extends TitleAreaDialog
 	{
 		//add all available commands to table; need to add synthethic commands too (or add them as real commands at startup)
 		Utilities.createStyledTextCommands();
-		ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		ICommandService cs = MacroManager.getOldCommandService();
 		Command[] allCommands=cs.getDefinedCommands();
 		List<IMacroCommand> allItems=new ArrayList<IMacroCommand>();
 		for (int i = 0; i < allCommands.length; i++) {

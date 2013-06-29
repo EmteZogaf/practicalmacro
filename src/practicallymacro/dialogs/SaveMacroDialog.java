@@ -151,7 +151,7 @@ public class SaveMacroDialog extends TitleAreaDialog
 			}
 			
 			//TODO: validate id
-			ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+			ICommandService cs = MacroManager.getOldCommandService();
 			if (mID.getText().length()==0)
 			{
 				setMessage("You must specify an ID for the command", IMessageProvider.ERROR);

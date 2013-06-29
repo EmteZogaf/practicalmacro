@@ -108,7 +108,7 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 			document.addDocumentListener(mRecorder);
 			document.addDocumentListener(mRecorder.getMarkUpdater());
 
-			ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+			ICommandService cs = MacroManager.getOldCommandService();
 			cs.addExecutionListener(mRecorder);
 
 			registerFindAction();
@@ -174,7 +174,7 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 					e.printStackTrace();
 				}
 	
-				ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+				ICommandService cs = MacroManager.getOldCommandService();
 				cs.removeExecutionListener(mRecorder);
 	
 				try
@@ -277,7 +277,7 @@ public class RecordCommandAction extends Action implements IWorkbenchWindowActio
 ////			ate.setAction(ITextEditorActionConstants.FIND, null);
 //			ate.setAction(ITextEditorActionConstants.FIND, macroFindAction);
 			
-			IHandlerService hs = (IHandlerService) PlatformUI.getWorkbench().getAdapter(IHandlerService.class);
+			IHandlerService hs = MacroManager.getOldHandlerService();
 			IHandler actionHandler = new ActionHandler(macroFindAction);
 //			String id="org.eclipse.ui.textEditorScope";
 //			Set<String> partIDs=new HashSet<String>();

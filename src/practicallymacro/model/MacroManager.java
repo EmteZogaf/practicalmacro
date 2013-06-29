@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,9 +34,11 @@ import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.handlers.IHandlerService;
+import org.eclipse.ui.keys.IBindingService;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -286,14 +289,56 @@ public class MacroManager
 		{
 			mMacroMap.put(macro.getID(), macro);
 			
-			ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+			ICommandService cs = MacroManager.getOldCommandService();
 			Category category=cs.getCategory(MacroManager.UserMacroCategoryID);
 			Command newCommand=cs.getCommand(macro.getID());
 			newCommand.define(macro.getName(), macro.getDescription(), category);
 			newCommand.setHandler(new MacroHandler(macro.getID()));
-			IHandlerService hs=(IHandlerService) PlatformUI.getWorkbench().getAdapter(IHandlerService.class);
+			IHandlerService hs=MacroManager.getOldHandlerService();
 			if (hs!=null)
 				hs.activateHandler(newCommand.getId(), newCommand.getHandler());
+			
+			try
+			{
+				Class e4Helper=Class.forName("practicallymacro.model.E4CommandHelper");
+				Method helperMethod=e4Helper.getMethod("addMCommandToSystem", Command.class);
+				helperMethod.invoke(e4Helper, newCommand);
+			}
+			catch (Throwable t)
+			{
+				t.printStackTrace();
+			}
+//			IEclipseContext context=(IEclipseContext)PlatformUI.getWorkbench().getAdapter(IEclipseContext.class);
+//			try
+//			{
+//				Class commandsFactory=Class.forName("org.eclipse.e4.ui.model.application.commands.impl.CommandsFactoryImpl");
+//				Field instanceField=commandsFactory.getField("INSTANCE");
+//				Method createCommand=commandsFactory.getMethod("createCommand");
+//				Object implInstance=instanceField.get(null);
+//				MCommand anMCommand=(MCommand)createCommand.invoke(implInstance);
+//	//			MCommand anMCommand=CommandsFactoryImpl.INSTANCE.createCommand();
+//				anMCommand.setElementId(newCommand.getId());
+//				try
+//				{
+//					anMCommand.setCommandName(newCommand.getName());
+//				}
+//				catch (Exception e)
+//				{
+//					e.printStackTrace();
+//				}
+//				MApplication app=context.get(MApplication.class);
+//				List<MCommand> allCommands=app.getCommands();
+//				allCommands.add(anMCommand);
+//			}
+//			catch (Exception e)
+//			{
+//				e.printStackTrace();
+//			}
+			
+//            IBindingService bindingService=context.get(IBindingService.class);
+//            TriggerSequence[] allKeys=bindingService.getActiveBindingsFor(newCommand.getId());
+//            System.out.println("nothing");
+			
 		}
 		else
 		{
@@ -309,11 +354,43 @@ public class MacroManager
 	
 	}
 	
+//	public static ECommandService getCommandService()
+//	{
+//		IEclipseContext context=(IEclipseContext)PlatformUI.getWorkbench().getAdapter(IEclipseContext.class);
+//		if (context!=null)
+//		{
+//			return (ECommandService)context.get(ECommandService.class);
+//		}
+//		return null;
+//	}
+	
+	public static ICommandService getOldCommandService()
+	{
+		ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		return cs;
+	}
+	
+//	public static EHandlerService getHandlerService()
+//	{
+//		IEclipseContext context=(IEclipseContext)PlatformUI.getWorkbench().getAdapter(IEclipseContext.class);
+//		if (context!=null)
+//		{
+//			return (EHandlerService)context.get(EHandlerService.class);
+//		}
+//		return null;
+//	}
+	
+	public static IHandlerService getOldHandlerService()
+	{
+		IHandlerService hs = (IHandlerService) PlatformUI.getWorkbench().getAdapter(IHandlerService.class);
+		return hs;
+	}
+	
 	public void deleteMacro(EditorMacro macro)
 	{
 		mMacroMap.remove(macro.getID());
 
-		ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		ICommandService cs = MacroManager.getOldCommandService();
 		Command c=cs.getCommand(macro.getID());
 		if (c!=null && c.isDefined())
 			c.undefine();
@@ -658,6 +735,23 @@ public class MacroManager
             {
 				addMacro(editorMacro);
 			}
+            
+//            IEclipseContext context=(IEclipseContext)PlatformUI.getWorkbench().getAdapter(IEclipseContext.class);
+//            final IBindingService bindingService=context.get(IBindingService.class);
+            final IBindingService bindingService = (IBindingService) PlatformUI.getWorkbench().getAdapter(IBindingService.class);
+            if (bindingService!=null)
+            {
+				Display.getDefault().asyncExec(new Runnable() {
+		               public void run() {
+		            	   try {
+		            		   bindingService.savePreferences(bindingService.getActiveScheme(), bindingService.getBindings());
+		            	   } catch (IOException e) {
+		            		   // TODO Auto-generated catch block
+		            		   e.printStackTrace();
+		            	   }
+		               }
+		            });
+            }
         }
         
         //get macros from extension point
@@ -764,7 +858,7 @@ public class MacroManager
 		}
 		
 		//now, look for deleted macros
-		ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		ICommandService cs = MacroManager.getOldCommandService();
 		for (EditorMacro existingMacro : currentKeys)
 		{
 			//see if current map contains the command from the new set.  If not, then we need to delete the command

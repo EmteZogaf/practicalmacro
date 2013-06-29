@@ -227,7 +227,7 @@ public class PlayCommandDialog extends Dialog
 	private void updateCommandTable()
 	{
 		Utilities.createStyledTextCommands();
-		ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		ICommandService cs = MacroManager.getOldCommandService();
 		Command[] allCommands=cs.getDefinedCommands();
 		List<IMacroCommand> allItems=new ArrayList<IMacroCommand>();
 		for (int i = 0; i < allCommands.length; i++) {

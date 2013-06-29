@@ -16,6 +16,7 @@ import org.eclipse.ui.handlers.IHandlerService;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import practicallymacro.model.MacroManager;
 import practicallymacro.util.MacroConsole;
 import practicallymacro.util.Utilities;
 
@@ -39,12 +40,12 @@ public class EclipseCommand implements IMacroCommand
 	@SuppressWarnings("deprecation")
 	public boolean execute(IEditorPart target)
 	{
-		ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		ICommandService cs = MacroManager.getOldCommandService();
 		Command command=cs.getCommand(mCommandId);
 		if (command!=null)
 		{
 			try {
-				IHandlerService hs = (IHandlerService) PlatformUI.getWorkbench().getAdapter(IHandlerService.class);
+				IHandlerService hs = MacroManager.getOldHandlerService();
 				ExecutionEvent exEvent=hs.createExecutionEvent(command, null);
 				
 				//This check is necessary because certain commands (like copy) may be disabled until there
@@ -90,7 +91,7 @@ public class EclipseCommand implements IMacroCommand
 
 	public String getDescription()
 	{
-		ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		ICommandService cs = MacroManager.getOldCommandService();
 		Command command=cs.getCommand(mCommandId);
 		try {
 			return command.getDescription();
@@ -103,7 +104,7 @@ public class EclipseCommand implements IMacroCommand
 
 	public String getName()
 	{
-		ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		ICommandService cs = MacroManager.getOldCommandService();
 		Command command=cs.getCommand(mCommandId);
 		try {
 			return command.getName();
@@ -117,7 +118,7 @@ public class EclipseCommand implements IMacroCommand
 	
 	public String getCategory()
 	{
-		ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		ICommandService cs = MacroManager.getOldCommandService();
 		Command command=cs.getCommand(mCommandId);
 		try {
 			Category cat=command.getCategory();
@@ -132,7 +133,7 @@ public class EclipseCommand implements IMacroCommand
 
 	public String getCategoryID()
 	{
-		ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		ICommandService cs = MacroManager.getOldCommandService();
 		Command command=cs.getCommand(mCommandId);
 		try {
 			Category cat=command.getCategory();

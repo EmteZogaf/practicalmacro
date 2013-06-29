@@ -212,7 +212,7 @@ public class PlayDropdownAction implements IWorkbenchWindowPulldownDelegate
 		@Override
 		public void run()
 		{
-			ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+			ICommandService cs = MacroManager.getOldCommandService();
 			Command systemCommand=null;
 			if (mMacro.getID().length()>0)
 				systemCommand=cs.getCommand(mMacro.getID());
@@ -261,7 +261,7 @@ public class PlayDropdownAction implements IWorkbenchWindowPulldownDelegate
 					currentIDs.add(macro.getID());
 				}
 			}
-			ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+			ICommandService cs = MacroManager.getOldCommandService();
 			Collection<String> allCommands=cs.getDefinedCommandIds();
 			for (String commandID : allCommands)
 			{

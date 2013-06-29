@@ -133,7 +133,7 @@ public class Utilities {
 				,ST.WINDOW_START,ST.SELECT_PAGE_UP,ST.PAGE_UP,ST.DELETE_WORD_NEXT,ST.CUT,ST.DELETE_NEXT,ST.COPY
 				,ST.PASTE,ST.TOGGLE_OVERWRITE};
 
-		ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		ICommandService cs = MacroManager.getOldCommandService();
 		Category cat=cs.getCategory(FillInPrefix);
 		cat.define("Styled Text Commands", "");
 		for (int i = 0; i < styledTextConstants.length; i++)

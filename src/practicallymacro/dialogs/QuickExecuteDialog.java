@@ -24,6 +24,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 
 import practicallymacro.editormacros.Activator;
+import practicallymacro.model.MacroManager;
 import practicallymacro.preferences.Initializer;
 
 public class QuickExecuteDialog extends Dialog
@@ -87,7 +88,7 @@ public class QuickExecuteDialog extends Dialog
 		mQuickCommands=new ArrayList<Command>();
 		String commandIDString=Activator.getDefault().getPreferenceStore().getString(Initializer.Pref_QuickPlayCommands);
 		String[] commandIDs=commandIDString.split("\n");
-		final ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		final ICommandService cs = MacroManager.getOldCommandService();
 		for (String id : commandIDs)
 		{
 			if (id==null || id.length()==0)
@@ -115,7 +116,6 @@ public class QuickExecuteDialog extends Dialog
 				if (dlg.open()==Dialog.OK)
 				{
 					List<String> ids=dlg.getCommands();
-//					ICommandService cs = (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
 					for (String id : ids)
 					{
 						Command c=cs.getCommand(id);
