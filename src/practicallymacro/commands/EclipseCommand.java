@@ -10,7 +10,6 @@ import org.eclipse.core.commands.IHandler2;
 import org.eclipse.core.commands.common.NotDefinedException;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.w3c.dom.Document;

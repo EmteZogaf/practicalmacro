@@ -33,7 +33,17 @@ public class E4CommandHelper {
 			}
 			MApplication app=context.get(MApplication.class);
 			List<MCommand> allCommands=app.getCommands();
-			allCommands.add(anMCommand);
+			boolean commandExists=false;
+			for (MCommand mcommand : allCommands)
+			{
+				if (mcommand.getElementId().equals(newCommand.getId()))
+				{
+					commandExists=true;
+					break;
+				}
+			}
+			if (!commandExists)
+				allCommands.add(anMCommand);
 		}
 		catch (Exception e)
 		{

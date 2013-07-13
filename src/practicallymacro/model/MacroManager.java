@@ -293,10 +293,12 @@ public class MacroManager
 			Category category=cs.getCategory(MacroManager.UserMacroCategoryID);
 			Command newCommand=cs.getCommand(macro.getID());
 			newCommand.define(macro.getName(), macro.getDescription(), category);
-			newCommand.setHandler(new MacroHandler(macro.getID()));
+			MacroHandler handler=new MacroHandler(macro.getID());
 			IHandlerService hs=MacroManager.getOldHandlerService();
 			if (hs!=null)
-				hs.activateHandler(newCommand.getId(), newCommand.getHandler());
+				hs.activateHandler(newCommand.getId(), handler);
+//			else
+				newCommand.setHandler(handler);
 			
 			try
 			{
@@ -308,6 +310,8 @@ public class MacroManager
 			{
 				t.printStackTrace();
 			}
+			
+			
 //			IEclipseContext context=(IEclipseContext)PlatformUI.getWorkbench().getAdapter(IEclipseContext.class);
 //			try
 //			{
