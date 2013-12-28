@@ -5,11 +5,11 @@ import java.util.Map;
 
 import org.eclipse.core.commands.Category;
 import org.eclipse.core.commands.Command;
-import org.eclipse.core.commands.ExecutionEvent;
-import org.eclipse.core.commands.IHandler2;
 import org.eclipse.core.commands.common.NotDefinedException;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.w3c.dom.Document;
@@ -36,7 +36,7 @@ public class EclipseCommand implements IMacroCommand
 		//nothing to do here
 	}
 	
-	@SuppressWarnings("deprecation")
+//	@SuppressWarnings("deprecation")
 	public boolean execute(IEditorPart target)
 	{
 		ICommandService cs = MacroManager.getOldCommandService();
@@ -44,19 +44,22 @@ public class EclipseCommand implements IMacroCommand
 		if (command!=null)
 		{
 			try {
+				processEvents();
 				IHandlerService hs = MacroManager.getOldHandlerService();
-				ExecutionEvent exEvent=hs.createExecutionEvent(command, null);
+				hs.executeCommand(mCommandId, null);
 				
-				//This check is necessary because certain commands (like copy) may be disabled until there
-				//is a selection.  However, the keystrokes that set the selection kick off an event
-				//that is not guaranteed to be received in time to run the copy command.  The 'new'
-				//way is to implement IHandler2, which explicitly runs the code to check the enablement,
-				//so for commands that don't implement that, I've gone back to the deprecated "execute"
-				//method that doesn't set (or check) the possibly out-of-date enable flag at all.
-				if (command.getHandler() instanceof IHandler2)
-					command.executeWithChecks(exEvent);
-				else
-					command.execute(exEvent);
+//				ExecutionEvent exEvent=hs.createExecutionEvent(command, null);
+				
+//				//This check is necessary because certain commands (like copy) may be disabled until there
+//				//is a selection.  However, the keystrokes that set the selection kick off an event
+//				//that is not guaranteed to be received in time to run the copy command.  The 'new'
+//				//way is to implement IHandler2, which explicitly runs the code to check the enablement,
+//				//so for commands that don't implement that, I've gone back to the deprecated "execute"
+//				//method that doesn't set (or check) the possibly out-of-date enable flag at all.
+//				if (command.getHandler() instanceof IHandler2)
+//					command.executeWithChecks(exEvent);
+//				else
+//					command.execute(exEvent);
 				return true;
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -65,6 +68,16 @@ public class EclipseCommand implements IMacroCommand
 		}
 
 		return false;
+	}
+	
+	protected static void processEvents() 
+	{
+	    Display display = PlatformUI.getWorkbench().getDisplay();
+	    if (display != null)
+	    {
+	        while (display.readAndDispatch())
+	        {}
+	    }
 	}
 
 	public void dump() {
