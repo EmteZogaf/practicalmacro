@@ -131,7 +131,7 @@ public class Utilities {
 				,ST.SELECT_LINE_START,ST.LINE_START,ST.SELECT_TEXT_END,ST.TEXT_END,ST.SELECT_LINE_END,ST.LINE_END
 				,ST.SELECT_WINDOW_END,ST.WINDOW_END,ST.SELECT_PAGE_DOWN,ST.PAGE_DOWN,ST.SELECT_WINDOW_START
 				,ST.WINDOW_START,ST.SELECT_PAGE_UP,ST.PAGE_UP,ST.DELETE_WORD_NEXT,ST.CUT,ST.DELETE_NEXT,ST.COPY
-				,ST.PASTE,ST.TOGGLE_OVERWRITE};
+				,ST.PASTE,ST.TOGGLE_OVERWRITE,ST.SELECT_LINE_UP, ST.SELECT_LINE_DOWN, ST.DELETE_WORD_PREVIOUS};
 
 		ICommandService cs = MacroManager.getOldCommandService();
 		Category cat=cs.getCategory(FillInPrefix);
@@ -154,72 +154,84 @@ public class Utilities {
 			return new InsertStringCommand(new String(new char[]{event.character}));
 		}
 		
-		boolean isMod1=((event.stateMask & SWT.MOD1) > 0); //ctrl
-		boolean isMod2=((event.stateMask & SWT.MOD2) > 0);  //shift
+		boolean isCtrl=((event.stateMask & SWT.MOD1) > 0); //ctrl
+		boolean isShift=((event.stateMask & SWT.MOD2) > 0);  //shift
 		
 		switch (key)
 		{
-			case SWT.BS: return new EclipseCommand(getStyledTextCommand(ST.DELETE_PREVIOUS).getId());
-			case SWT.ARROW_DOWN: return new EclipseCommand(getStyledTextCommand(ST.LINE_DOWN).getId());
+			case SWT.BS:
+				if (isCtrl)
+					return new EclipseCommand(getStyledTextCommand(ST.DELETE_WORD_PREVIOUS).getId());
+				else
+					return new EclipseCommand(getStyledTextCommand(ST.DELETE_PREVIOUS).getId());
+			case SWT.ARROW_DOWN:
+				if (isShift && !isCtrl)
+					return new EclipseCommand(getStyledTextCommand(ST.SELECT_LINE_DOWN).getId());
+				else if (!isCtrl && !isShift)
+					return new EclipseCommand(getStyledTextCommand(ST.LINE_DOWN).getId());
 			case SWT.ARROW_LEFT:
-				if (isMod1 && isMod2)
+				if (isCtrl && isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.SELECT_WORD_PREVIOUS).getId());
-				else if (isMod1)
+				else if (isCtrl)
 					return new EclipseCommand(getStyledTextCommand(ST.WORD_PREVIOUS).getId());
-				else if (isMod2)
+				else if (isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.SELECT_COLUMN_PREVIOUS).getId());
 				return new EclipseCommand(getStyledTextCommand(ST.COLUMN_PREVIOUS).getId());
 			case SWT.ARROW_RIGHT: 
-				if (isMod1 && isMod2)
+				if (isCtrl && isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.SELECT_WORD_NEXT).getId());
-				else if (isMod1)
+				else if (isCtrl)
 					return new EclipseCommand(getStyledTextCommand(ST.WORD_NEXT).getId());
-				else if (isMod2)
+				else if (isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.SELECT_COLUMN_NEXT).getId());
 				return new EclipseCommand(getStyledTextCommand(ST.COLUMN_NEXT).getId());
-			case SWT.ARROW_UP: return new EclipseCommand(getStyledTextCommand(ST.LINE_UP).getId());
+			case SWT.ARROW_UP: 
+				if (isShift && !isCtrl)
+					return new EclipseCommand(getStyledTextCommand(ST.SELECT_LINE_UP).getId());
+				else if (!isCtrl && !isShift)
+					return new EclipseCommand(getStyledTextCommand(ST.LINE_UP).getId());
 			case SWT.HOME:
-				if (isMod1 && isMod2)
+				if (isCtrl && isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.SELECT_TEXT_START).getId());
-				if (isMod1)
+				if (isCtrl)
 					return new EclipseCommand(getStyledTextCommand(ST.TEXT_START).getId());
-				if (isMod2)
+				if (isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.SELECT_LINE_START).getId());
 				return new EclipseCommand(getStyledTextCommand(ST.LINE_START).getId());
 			case SWT.END: 
-				if (isMod1 && isMod2)
+				if (isCtrl && isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.SELECT_TEXT_END).getId());
-				if (isMod1)
+				if (isCtrl)
 					return new EclipseCommand(getStyledTextCommand(ST.TEXT_END).getId());
-				if (isMod2)
+				if (isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.SELECT_LINE_END).getId());
 				return new EclipseCommand(getStyledTextCommand(ST.LINE_END).getId());
 			case SWT.PAGE_DOWN: 
-				if (isMod1 && isMod2)
+				if (isCtrl && isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.SELECT_WINDOW_END).getId());
-				if (isMod1)
+				if (isCtrl)
 					return new EclipseCommand(getStyledTextCommand(ST.WINDOW_END).getId());
-				if (isMod2)
+				if (isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.SELECT_PAGE_DOWN).getId());
 				return new EclipseCommand(getStyledTextCommand(ST.PAGE_DOWN).getId());
 			case SWT.PAGE_UP: 
-				if (isMod1 && isMod2)
+				if (isCtrl && isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.SELECT_WINDOW_START).getId());
-				if (isMod1)
+				if (isCtrl)
 					return new EclipseCommand(getStyledTextCommand(ST.WINDOW_START).getId());
-				if (isMod2)
+				if (isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.SELECT_PAGE_UP).getId());
 				return new EclipseCommand(getStyledTextCommand(ST.PAGE_UP).getId());
 			case SWT.DEL:
-				if (isMod1)
+				if (isCtrl)
 					return new EclipseCommand(getStyledTextCommand(ST.DELETE_WORD_NEXT).getId());
-				if (isMod2)
+				if (isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.CUT).getId());
 				return new EclipseCommand(getStyledTextCommand(ST.DELETE_NEXT).getId());
 			case SWT.INSERT: 
-				if (isMod1)
+				if (isCtrl)
 					return new EclipseCommand(getStyledTextCommand(ST.COPY).getId());
-				if (isMod2)
+				if (isShift)
 					return new EclipseCommand(getStyledTextCommand(ST.PASTE).getId());
 				return new EclipseCommand(getStyledTextCommand(ST.TOGGLE_OVERWRITE).getId());
 		}
@@ -280,11 +292,14 @@ public class Utilities {
 		case ST.SELECT_PAGE_UP: return "Select page up";
 		case ST.PAGE_UP: return "Move cursor up a page";
 		case ST.DELETE_WORD_NEXT: return "Delete next word";
+		case ST.DELETE_WORD_PREVIOUS: return "Delete previous word";
 		case ST.CUT: return "Cut";
 		case ST.DELETE_NEXT: return "Delete next character";
 		case ST.COPY: return "Copy";
 		case ST.PASTE: return "Paste";
 		case ST.TOGGLE_OVERWRITE: return "Toggle overwrite mode";
+		case ST.SELECT_LINE_DOWN: return "Select line down";
+		case ST.SELECT_LINE_UP: return "Select line up";
 		}
 		
 		return "Unknown constant";
