@@ -4,7 +4,7 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.IHandler;
 import org.eclipse.core.commands.IHandlerListener;
-import org.eclipse.swt.custom.StyledText;
+import org.eclipse.jface.text.source.ISourceViewer;
 
 import practicallymacro.model.EditorMacro;
 import practicallymacro.model.MacroManager;
@@ -25,12 +25,12 @@ public class ExtendSelectionToMark implements IHandler
 
 	public Object execute(ExecutionEvent event) throws ExecutionException
 	{
-		StyledText styled=Utilities.getStyledText(Utilities.getActiveEditor());
-		if (styled!=null)
+		ISourceViewer viewer=Utilities.getSourceViewer(Utilities.getActiveEditor());
+		if (viewer!=null)
 		{
 			int markPos=(-1);
 			EditorMacro macro=MacroManager.getManager().getCurrentMacro();
-			int caretPos=styled.getCaretOffset();
+			int caretPos=Utilities.getCaretPos(Utilities.getActiveEditor());
 			if (macro!=null)
 			{
 				markPos=macro.getMark();
@@ -42,7 +42,7 @@ public class ExtendSelectionToMark implements IHandler
 			
 			if (markPos>=0)
 			{
-				styled.setSelection(caretPos, markPos);
+				viewer.setSelectedRange(caretPos, markPos-caretPos);
 			}			
 		}
 		

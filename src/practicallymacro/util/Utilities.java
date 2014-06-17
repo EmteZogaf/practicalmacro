@@ -15,6 +15,7 @@ import org.eclipse.core.commands.IHandler;
 import org.eclipse.core.commands.IHandlerListener;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IFindReplaceTarget;
 import org.eclipse.jface.text.ITextOperationTarget;
@@ -22,6 +23,7 @@ import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ST;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPartService;
@@ -81,6 +83,59 @@ public class Utilities {
 		}
 		
 		return editor;
+	}
+	
+	public static ISourceViewer getSourceViewer(IEditorPart editor) {
+		
+		if (editor==null)
+			return null;
+		
+		ISourceViewer viewer = (ISourceViewer)editor.getAdapter(ITextOperationTarget.class);
+		return viewer;
+	}
+	
+//	public static ITextSelection getTextSelection(ISourceViewer viewer)
+//	{
+//		return (ITextSelection)viewer.getSelectionProvider().getSelection();
+//	}
+	
+	public static String getSelectedText(IEditorPart editor)
+	{
+		Point viewerSelection=getUndirectedSelection(editor);
+		IDocument doc=getIDocumentForEditor(editor);
+		try {
+			return doc.get(viewerSelection.x, viewerSelection.y-viewerSelection.x);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+			return "";
+		}
+	}
+	
+	public static int getCaretPos(IEditorPart editor)
+	{
+		Point viewerSelection=getUndirectedSelection(editor);
+		StyledText styled=getStyledText(editor);
+		int caretPos=styled.getCaretOffset();
+		Point styledSel=styled.getSelection();
+		if (caretPos==styledSel.x)
+			return viewerSelection.x;
+		else
+			return viewerSelection.y;
+	}
+	
+	public static Point getUndirectedSelection(ISourceViewer viewer)
+	{
+		Point result=viewer.getSelectedRange();
+		if (result.y>=0)
+			return new Point(result.x, result.x+result.y);
+		else
+			return new Point(result.x+result.y, result.x);
+	}
+	
+	public static Point getUndirectedSelection(IEditorPart editor)
+	{
+		ISourceViewer viewer=getSourceViewer(editor);
+		return getUndirectedSelection(viewer);
 	}
 
 	public static StyledText getStyledText(IEditorPart editor) {

@@ -9,6 +9,7 @@ import org.eclipse.jface.text.IFindReplaceTarget;
 import org.eclipse.jface.text.IFindReplaceTargetExtension;
 import org.eclipse.jface.text.IFindReplaceTargetExtension3;
 import org.eclipse.jface.text.Region;
+import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
@@ -85,13 +86,9 @@ public class FindCommand implements IMacroCommand {
 		IEditorPart editor=Utilities.getActiveEditor();
 		if (editor!=null)
 		{
-			StyledText widget=Utilities.getStyledText(editor);
-			if (widget!=null)
-			{
-				initialSearchString=widget.getSelectionText();
-				if (initialSearchString.length()==0)
-					initialSearchString=null;
-			}
+			initialSearchString=Utilities.getSelectedText(editor);
+			if (initialSearchString.length()==0)
+				initialSearchString=null;
 		}
 		configureWithSearchTerm(shell, initialSearchString);
 	}
@@ -119,8 +116,9 @@ public class FindCommand implements IMacroCommand {
 
 	public boolean execute(IEditorPart target)
 	{
+		ISourceViewer viewer = Utilities.getSourceViewer(target);
 		IFindReplaceTarget findTarget=Utilities.getFindReplaceTarget(target);
-		if (findTarget!=null)
+		if (findTarget!=null && viewer!=null)
 		{
 			if (findTarget instanceof IFindReplaceTargetExtension)
 			{
@@ -133,14 +131,20 @@ public class FindCommand implements IMacroCommand {
 					{
 						IFindReplaceTargetExtension3 findTarget3=(IFindReplaceTargetExtension3)findTarget;
 						
+						int widgetBoundaryStart=0;
+						int widgetBoundaryEnd=widget.getCharCount()-1;
 						int boundaryStart=0;
-						int boundaryEnd=widget.getCharCount()-1;
+						int boundaryEnd=viewer.getDocument().getLength()-1;
 						if (mScopeIsSelection)
 						{
-							Point sel=widget.getSelectionRange();
+							Point sel=Utilities.getUndirectedSelection(target);
 							boundaryStart=sel.x;
-							boundaryEnd=sel.x+sel.y;
-							findTarget1.setScope(new Region(sel.x, sel.y));
+							boundaryEnd=sel.y;
+							Point widgetSel=widget.getSelectionRange();
+							widgetBoundaryStart=widgetSel.x;
+							widgetBoundaryEnd=widgetSel.x+widgetSel.y;
+//							findTarget1.setScope(new Region(widgetSel.x, widgetSel.y));
+							findTarget1.setScope(new Region(boundaryStart, boundaryEnd-boundaryStart));
 						}
 						else
 						{
@@ -151,7 +155,7 @@ public class FindCommand implements IMacroCommand {
 						if (mReplaceString!=null && mReplaceAll)
 						{
 							//by convention, replaceall always returns true
-							doReplaceAll(findTarget3, widget);
+							doReplaceAll(findTarget3, viewer, target);
 							return true;
 						}
 							
@@ -176,30 +180,35 @@ public class FindCommand implements IMacroCommand {
 							
 							//backup strategy is to use the selection
 							if (searchString==null)
-								searchString=widget.getSelectionText();
+								searchString=Utilities.getSelectedText(target);
 						}
 						if (searchString==null || searchString.length()==0)
 							return false;
 
-						int startPos=widget.getCaretOffset()-1;
+						int startPos=widget.getCaretOffset()-1; //for some reason, has to be widget offsets, not sourceViewer
+//						int startPos=Utilities.getCaretPos(target)-1;
 						if (mScopeIsSelection)
 						{
 							if (mSearchForward)
-								startPos=boundaryStart;
+								startPos=widgetBoundaryStart;
 							else
-								startPos=boundaryEnd;
+								startPos=widgetBoundaryEnd;
 						}
 						int findPos=((IFindReplaceTargetExtension3)findTarget).findAndSelect(startPos, searchString, mSearchForward, mCaseSensitive, mMatchWholeWord, mRegExpMode);
+						if (findPos>=0)
+							findPos=Utilities.getUndirectedSelection(target).x;  //convert back to global coordinates
 						if (!isInRange(searchString, boundaryStart, boundaryEnd, findPos) && mWrapSearch)
 						{
 							if (!mScopeIsSelection)
 							{
 								if (mSearchForward)
-									startPos=boundaryStart;
+									startPos=widgetBoundaryStart;
 								else
-									startPos=boundaryEnd;
+									startPos=widgetBoundaryEnd;
 								
 								findPos=((IFindReplaceTargetExtension3)findTarget).findAndSelect(startPos, searchString, mSearchForward, mCaseSensitive, mMatchWholeWord, mRegExpMode);
+								if (findPos>=0)
+									findPos=Utilities.getUndirectedSelection(target).x;  //convert back to global coordinates
 							}
 						}
 							
@@ -228,32 +237,36 @@ public class FindCommand implements IMacroCommand {
 		return false;
 	}
 
-	private void doReplaceAll(IFindReplaceTargetExtension3 findTarget, StyledText widget)
+	private void doReplaceAll(IFindReplaceTargetExtension3 findTarget, ISourceViewer sourceViewer, IEditorPart target)
 	{
-		int docPos=0;
+		int widgetPos=0;
 		int endBoundary=0;
 		if (mScopeIsSelection)
 		{
-			docPos=widget.getSelection().x;
-			endBoundary=widget.getSelection().y;
+			Point currentSel=Utilities.getUndirectedSelection(sourceViewer);
+			endBoundary=currentSel.y;
+			Point widgetSel=sourceViewer.getTextWidget().getSelectionRange();
+			widgetPos=widgetSel.x;
 		}
 		
 		while (true)
 		{
 			//perform a find
-			int foundPos=findTarget.findAndSelect(docPos, mSearchString, mSearchForward, mCaseSensitive, mMatchWholeWord, mRegExpMode);
-			if (foundPos<0 || (mScopeIsSelection && foundPos>=endBoundary))
+			int foundPos=findTarget.findAndSelect(widgetPos, mSearchString, mSearchForward, mCaseSensitive, mMatchWholeWord, mRegExpMode);
+			int docPos=foundPos;
+			if (docPos>=0)
+				docPos=Utilities.getUndirectedSelection(target).x;  //convert back to global coordinates
+			if (docPos<0 || (mScopeIsSelection && docPos>=endBoundary))
 				break;
 				
 			//replace the text
-			int oldDocLength=widget.getCharCount();
-			int searchStringSize=widget.getSelectionCount(); //accounts for regular expressions
+			int oldDocLength=sourceViewer.getDocument().getLength();
+			int foundStringSize=sourceViewer.getSelectedRange().y; //accounts for regular expressions by just using whatever the selected text is
 			findTarget.replaceSelection(mReplaceString, mRegExpMode);
-			int newDocLength=widget.getCharCount();
+			int newDocLength=sourceViewer.getDocument().getLength();
 			int amtAdded=newDocLength-oldDocLength;
-			docPos=foundPos+searchStringSize+amtAdded;
-			endBoundary+=amtAdded;
-			
+			widgetPos=foundPos+foundStringSize+amtAdded;  //push past end of replacement string
+			endBoundary+=amtAdded; //extend end character boundary in document 
 		}
 	}
 

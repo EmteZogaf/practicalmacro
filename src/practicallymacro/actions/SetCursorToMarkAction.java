@@ -2,8 +2,8 @@ package practicallymacro.actions;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.swt.custom.StyledText;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
@@ -32,14 +32,14 @@ public class SetCursorToMarkAction extends Action implements
 	@Override
 	public void run()
 	{
-		StyledText styled=Utilities.getStyledText(Utilities.getActiveEditor());
-		if (styled!=null)
+		ISourceViewer viewer=Utilities.getSourceViewer(Utilities.getActiveEditor());
+		if (viewer!=null)
 		{
 			EditorMacro macro=MacroManager.getManager().getCurrentMacro();
 			if (macro!=null)
 			{
 				int markPos=macro.getMark();
-				styled.setCaretOffset(markPos);
+				viewer.setSelectedRange(markPos, 0);
 			}
 		}
 	}

@@ -5,7 +5,6 @@ import java.util.List;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.graphics.Point;
@@ -28,7 +27,7 @@ public class MacroDebugDialog extends Dialog
 	private List<MacroCommandDebugInfo> mCommands;
 	private int mSelectedAction;
 //	private StyledText mFocusEditor;
-	public MacroDebugDialog(Shell shell, List<MacroCommandDebugInfo> commands, StyledText focusEditor)
+	public MacroDebugDialog(Shell shell, List<MacroCommandDebugInfo> commands)
 	{
 		super(shell);
 		mCommands=commands;

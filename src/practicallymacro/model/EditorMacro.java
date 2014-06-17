@@ -8,7 +8,7 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextOperationTarget;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.ITextViewerExtension;
-import org.eclipse.swt.custom.StyledText;
+import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorPart;
@@ -177,7 +177,6 @@ public class EditorMacro {
 						{
 							if (debugMode)
 							{
-								StyledText text=Utilities.getStyledText(editor);
 								List<MacroCommandDebugInfo> combinedDebugInfo=new ArrayList<MacroCommandDebugInfo>();
 								combinedDebugInfo.addAll(collectedDebugInfo);
 								for (int k=i;k<flattenedList.size();k++)
@@ -188,7 +187,7 @@ public class EditorMacro {
 										combinedDebugInfo.add(new MacroCommandDebugInfo((IMacroCommand)obj));
 									}
 								}
-								MacroDebugDialog dlg=new MacroDebugDialog(Display.getCurrent().getActiveShell(), combinedDebugInfo, /*mLastDebugWindowLocation, mLastDebugWindowSize,*/ text);
+								MacroDebugDialog dlg=new MacroDebugDialog(Display.getCurrent().getActiveShell(), combinedDebugInfo);
 								dlg.open();
 								int selectedAction=dlg.getSelectedAction();
 								if (selectedAction==MacroDebugDialog.ACTION_CANCELEXECUTION)
@@ -213,27 +212,27 @@ public class EditorMacro {
 							if (debugMode)
 							{
 								//patch my list of commands with the proper info
-								StyledText text=Utilities.getStyledText(editor);
-								Point selRange=text.getSelection();
-								int caretPos=text.getCaretOffset();
+								ISourceViewer sourceViewer=Utilities.getSourceViewer(editor);
+								Point selRange=sourceViewer.getSelectedRange();
+								int caretPos=Utilities.getCaretPos(editor);
 								Point cursorPos=new Point(0,0);
 								Point selEndPos=new Point(0,0);
 								if (selRange.x<selRange.y) //if there is a selection
 								{
 									if (caretPos==selRange.x)
 									{
-										translate(text, selRange.y, selEndPos);
+										translate(sourceViewer, selRange.y, selEndPos);
 									}
 									else
 									{
-										translate(text, selRange.x, selEndPos);
+										translate(sourceViewer, selRange.x, selEndPos);
 									}
 								}
 								else
 								{
 									selEndPos=null;
 								}
-								translate(text, caretPos, cursorPos);
+								translate(sourceViewer, caretPos, cursorPos);
 								MacroCommandDebugInfo newInfo=new MacroCommandDebugInfo(command, cursorPos, selEndPos);
 								collectedDebugInfo.add(newInfo);
 								MacroConsole.getConsole().writeln("--After command, cursor at: Line "+cursorPos.x+", Column "+cursorPos.y, MacroConsole.Type_DebugInfo);
@@ -288,12 +287,19 @@ public class EditorMacro {
 		
 	}
 
-	private void translate(StyledText text, int offset, Point textPos)
+	private void translate(ISourceViewer viewer, int offset, Point textPos)
 	{
-		int lineAtOffset=text.getLineAtOffset(offset);
-		int column=offset-text.getOffsetAtLine(lineAtOffset);
-		textPos.x=lineAtOffset+1;
-		textPos.y=column+1;
+		try
+		{
+			int lineAtOffset=viewer.getDocument().getLineOfOffset(offset);
+			int column=offset-viewer.getDocument().getLineOffset(lineAtOffset);
+			textPos.x=lineAtOffset+1;
+			textPos.y=column+1;
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 	private void updateMacroStack(FlattenWrapper wrapper)

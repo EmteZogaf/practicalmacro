@@ -4,7 +4,7 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.IHandler;
 import org.eclipse.core.commands.IHandlerListener;
-import org.eclipse.swt.custom.StyledText;
+import org.eclipse.jface.text.source.ISourceViewer;
 
 import practicallymacro.model.EditorMacro;
 import practicallymacro.model.MacroManager;
@@ -24,10 +24,10 @@ public class MarkSelectionStart implements IHandler {
 
 	public Object execute(ExecutionEvent event) throws ExecutionException
 	{
-		StyledText styled=Utilities.getStyledText(Utilities.getActiveEditor());
-		if (styled!=null)
+		ISourceViewer viewer=Utilities.getSourceViewer(Utilities.getActiveEditor());
+		if (viewer!=null)
 		{
-			int markPos=styled.getSelection().x;
+			int markPos=Utilities.getUndirectedSelection(Utilities.getActiveEditor()).x;
 			EditorMacro macro=MacroManager.getManager().getCurrentMacro();
 			if (macro!=null)
 			{

@@ -4,10 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.swt.custom.ExtendedModifyEvent;
 import org.eclipse.swt.custom.ExtendedModifyListener;
 import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.custom.StyledTextContent;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorPart;
 import org.w3c.dom.Document;
@@ -59,6 +60,7 @@ public class InsertStringCommand implements IMacroCommand
 		
 		if (mData!=null)
 		{
+			IDocument doc=Utilities.getIDocumentForEditor(target);
 			StyledText widget=Utilities.getStyledText(target);
 			if (widget!=null)
 			{
@@ -74,21 +76,21 @@ public class InsertStringCommand implements IMacroCommand
 				//strings directly into the styledTextContent, which bypasses any auto
 				//indent strategy that might be set on the viewer.  I don't think I want to always do
 				//this because I *do* want to get autoindent behavior for \n insertions.
-				int caretPos=widget.getCaretOffset();
-				int selSize=widget.getSelectionCount();
-				StyledTextContent content=widget.getContent();
-				if (content!=null && (mData.length()>1))// || (mData.length()==1 && mData.charAt(0)!='\r')))
+				int startPos=Utilities.getUndirectedSelection(target).x;
+				int selSize=Utilities.getSelectedText(target).length();
+				if (doc!=null && (mData.length()>1))// || (mData.length()==1 && mData.charAt(0)!='\r')))
 				{
 					try
 					{
-//						content.addTextChangeListener(mTextChangeListener);
-						content.replaceTextRange(caretPos, selSize, mData);
-						widget.setCaretOffset(caretPos+mData.length()-selSize);
-//						widget.setCaretOffset(mTextChangeListener.getCaretOffset());
+						doc.replace(startPos, selSize, mData);
+						Utilities.getSourceViewer(target).setSelectedRange(startPos+mData.length(), 0);
+//						content.replaceTextRange(caretPos, selSize, mData);
+//						widget.setCaretOffset(caretPos+mData.length()-selSize);
+					} catch (BadLocationException e) {
+						e.printStackTrace();
 					}
 					finally
 					{
-//						content.removeTextChangeListener(mTextChangeListener);
 					}
 				}
 				else
@@ -102,7 +104,6 @@ public class InsertStringCommand implements IMacroCommand
 						if (mData.equals("\r") || mData.equals("\n"))
 							insertString=widget.getLineDelimiter();
 						widget.insert(insertString);
-//						widget.setCaretOffset(caretPos+insertString.length()-selSize);
 						if (mExtendedModifyListener.getCaretOffset()>=0)
 							widget.setCaretOffset(mExtendedModifyListener.getCaretOffset());
 					}

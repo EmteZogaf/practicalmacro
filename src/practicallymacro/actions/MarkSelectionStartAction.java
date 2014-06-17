@@ -3,7 +3,7 @@ package practicallymacro.actions;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
@@ -31,13 +31,10 @@ public class MarkSelectionStartAction extends Action implements
 	
 	@Override
 	public void run() {
-		StyledText styled=Utilities.getStyledText(Utilities.getActiveEditor());
-		if (styled!=null)
-		{
-			EditorMacro macro=MacroManager.getManager().getCurrentMacro();
-			if (macro!=null)
-				macro.setMark(styled.getSelection().x);
-		}
+		Point sel=Utilities.getUndirectedSelection(Utilities.getActiveEditor());
+		EditorMacro macro=MacroManager.getManager().getCurrentMacro();
+		if (macro!=null)
+			macro.setMark(sel.x);
 	}
 
 	public void selectionChanged(IAction action, ISelection selection) {
