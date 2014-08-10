@@ -133,7 +133,7 @@ public class PlayCommandDialog extends Dialog
 		});
 		
 		
-		mDescriptionText=new Text(comp, SWT.BORDER | SWT.MULTI | SWT.READ_ONLY | SWT.V_SCROLL);
+		mDescriptionText=new Text(comp, SWT.BORDER | SWT.MULTI | SWT.READ_ONLY | SWT.V_SCROLL | SWT.WRAP);
 		GridData descData=new GridData(GridData.FILL_HORIZONTAL);
 		gc=new GC(mDescriptionText);
 		descData.heightHint=gc.getFontMetrics().getHeight()*5;

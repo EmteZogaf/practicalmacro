@@ -100,21 +100,39 @@
       <command
             categoryId="practicallymacro.category.utility.command"
             defaultHandler="practicallymacro.commands.MarkSelectionStart"
-            description="Set the mark at the location of the current selection start."
+            description="Set mark #1 at the location of the current selection start (earliest in document) or cursor position."
             id="practicallymacro.actions.markSelectionStartCommand"
-            name="Mark selection start"/>
+            name="Set mark #1 at selection start"/>
+      <command
+            categoryId="practicallymacro.category.utility.command"
+            defaultHandler="practicallymacro.commands.MarkSelectionStart2"
+            description="Set mark #2 at the location of the current selection start (earliest in document) or cursor position."
+            id="practicallymacro.actions.markSelectionStartCommand2"
+            name="Set mark #2 at selection start"/>
       <command
             categoryId="practicallymacro.category.utility.command"
             defaultHandler="practicallymacro.commands.MarkSelectionEnd"
-            description="Set the mark at the location of the current selection end"
+            description="Set mark #1 at the location of the current selection end (farthest in document) or cursor position."
             id="practicallymacro.actions.markSelectionEndCommand"
-            name="Mark selection end"/>
+            name="Set mark #1 at selection end"/>
+      <command
+            categoryId="practicallymacro.category.utility.command"
+            defaultHandler="practicallymacro.commands.MarkSelectionEnd2"
+            description="Set mark #2 at the location of the current selection end (farthest in document) or cursor position."
+            id="practicallymacro.actions.markSelectionEndCommand2"
+            name="Set mark #2 at selection end"/>
       <command
             categoryId="practicallymacro.category.utility.command"
             defaultHandler="practicallymacro.commands.MoveCursorToMark"
-            description="Set the cursor at the last mark location"
+            description="Move the cursor to the location of mark #1."
             id="practicallymacro.actions.setCursorAtMarkCommand"
-            name="Set cursor at mark"/>
+            name="Move cursor to mark #1"/>
+      <command
+            categoryId="practicallymacro.category.utility.command"
+            defaultHandler="practicallymacro.commands.MoveCursorToMark2"
+            description="Move the cursor to the location of mark #2."
+            id="practicallymacro.actions.setCursorAtMarkCommand2"
+            name="Move cursor to mark #2"/>
       <category
             description="Editor macros defined by the user"
             id="practicallymacro.category.usermacros"
@@ -128,10 +146,15 @@
       <command
             categoryId="practicallymacro.category.utility.command"
             defaultHandler="practicallymacro.commands.ExtendSelectionToMark"
-            description="Extend the current selection to the current mark position, or the current cursor position if there is no mark.  If there is no selection, use the current cursor position."
+            description="Select from the current selection anchor (or current cursor position) to the location of mark #1."
             id="practicallymacro.actions.extendSelectionToMarkCommand"
-            name="Extend selection to mark">
-      </command>
+            name="Extend selection to mark #1"/>
+      <command
+            categoryId="practicallymacro.category.utility.command"
+            defaultHandler="practicallymacro.commands.ExtendSelectionToMark2"
+            description="Select from the current selection anchor (or current cursor position) to the location of mark #2."
+            id="practicallymacro.actions.extendSelectionToMarkCommand2"
+            name="Extend selection to mark #2"/>
    </extension>
    <extension
          point="org.eclipse.ui.bindings">

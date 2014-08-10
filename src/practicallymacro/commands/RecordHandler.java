@@ -8,11 +8,13 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
+import practicallymacro.model.MacroManager;
+
 public class RecordHandler implements IHandler {
 
 	public RecordHandler()
 	{
-		System.out.println("hit constructor");
+//		System.out.println("hit constructor");
 	}
 	
 	public void addHandlerListener(IHandlerListener handlerListener) {
@@ -28,7 +30,7 @@ public class RecordHandler implements IHandler {
 	public Object execute(ExecutionEvent event) throws ExecutionException
 	{
 		// TODO Auto-generated method stub
-		
+		MacroManager.getManager().clearMarks();
 		return null;
 	}
 

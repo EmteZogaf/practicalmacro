@@ -111,8 +111,29 @@ public class Utilities {
 		}
 	}
 	
+	public static int getSelectionAnchor(IEditorPart editor)
+	{
+		Point viewerSelection=getUndirectedSelection(editor);
+		int caretPos=getCaretPos(editor);
+		
+		if (caretPos==viewerSelection.x)
+			return viewerSelection.y;
+		else
+			return viewerSelection.x;
+		
+//		Point viewerSelection=getUndirectedSelection(editor);
+//		if (sourceViewer instanceof ITextViewerExtension5) {
+//			ITextViewerExtension5 extension= (ITextViewerExtension5)sourceViewer;
+//			caret= extension.widgetOffset2ModelOffset(styledText.getCaretOffset());
+//		} 
+		
+	}
+	
 	public static int getCaretPos(IEditorPart editor)
 	{
+		//use the styled texxt to determine which end of the selection is the caret,
+		//then get the actual text position (may be different because of folding) from
+		//the viewer selection
 		Point viewerSelection=getUndirectedSelection(editor);
 		StyledText styled=getStyledText(editor);
 		int caretPos=styled.getCaretOffset();

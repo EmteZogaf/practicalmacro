@@ -72,7 +72,7 @@ public class MacroManager
 //	private MacroRunListener mRunListener=new MacroRunListener();
 	private List<EditorMacro> mMacroStack;
 	private int mCommandsExecuted;
-	private int mRecordingMark;
+	private int[] mRecordingMarks=new int[]{0, 0};
 	private String mCurrentMacroState;
 	
 	private static int mUniqueSessionMacroID=1;
@@ -951,21 +951,27 @@ public class MacroManager
 		mCommandsExecuted=0;
 	}
 
-	public int getRecordingMark()
+	public int getRecordingMark(int index)
 	{
-		return mRecordingMark;
+		if (index<mRecordingMarks.length)
+			return mRecordingMarks[index];
+		return 0;
 	}
 	
-	public void setRecordingMark(int mark)
+	public void setRecordingMark(int mark, int index)
 	{
-		mRecordingMark=mark;
+		if (index<mRecordingMarks.length)
+			mRecordingMarks[index]=mark;
 	}
 
 	public void moveMarkOnDelete(boolean recordMode, int offset, int length)
 	{
 		if (recordMode)
 		{
-			mRecordingMark=EditorMacro.moveMarkOnDelete(mRecordingMark, offset, length);
+			for (int i=0; i<mRecordingMarks.length; i++)
+			{
+				mRecordingMarks[i]=EditorMacro.moveMarkOnDelete(mRecordingMarks[i], offset, length);
+			}
 		}
 		else
 		{
@@ -973,6 +979,17 @@ public class MacroManager
 				macro.moveMarkOnDelete(offset, length);
 			}
 		}
+	
+//		if (recordMode)
+//		{
+//			mRecordingMark=EditorMacro.moveMarkOnDelete(mRecordingMark, offset, length);
+//		}
+//		else
+//		{
+//			for (EditorMacro macro : mMacroStack) {
+//				macro.moveMarkOnDelete(offset, length);
+//			}
+//		}
 		
 	}
 
@@ -980,7 +997,10 @@ public class MacroManager
 	{
 		if (recordMode)
 		{
-			mRecordingMark=EditorMacro.moveMarkOnInsert(mRecordingMark, offset, length);
+			for (int i=0; i<mRecordingMarks.length; i++)
+			{
+				mRecordingMarks[i]=EditorMacro.moveMarkOnInsert(mRecordingMarks[i], offset, length);
+			}
 		}
 		else
 		{
@@ -989,6 +1009,17 @@ public class MacroManager
 				macro.moveMarkOnInsert(offset, length);
 			}
 		}
+//		if (recordMode)
+//		{
+//			mRecordingMark=EditorMacro.moveMarkOnInsert(mRecordingMark, offset, length);
+//		}
+//		else
+//		{
+//			for (EditorMacro macro : mMacroStack)
+//			{
+//				macro.moveMarkOnInsert(offset, length);
+//			}
+//		}
 	}
 	
 	/**
@@ -1028,5 +1059,12 @@ public class MacroManager
 	public void setMacroDebugMode(boolean macroDebugMode) {
 		mMacroDebugMode = macroDebugMode;
 	}
-	
+
+	public void clearMarks()
+	{
+		for (int i=0; i<mRecordingMarks.length; i++)
+		{
+			mRecordingMarks[i]=0;
+		}
+	}
 }

@@ -12,6 +12,11 @@ import practicallymacro.model.MacroManager;
 import practicallymacro.util.Utilities;
 
 
+/**
+ * I don't think this is used anymore.
+ * @deprecated
+ *
+ */
 public class MarkSelectionEndAction extends Action implements
 		IWorkbenchWindowActionDelegate {
 
@@ -34,7 +39,7 @@ public class MarkSelectionEndAction extends Action implements
 		Point sel=Utilities.getUndirectedSelection(Utilities.getActiveEditor());
 		EditorMacro macro=MacroManager.getManager().getCurrentMacro();
 		if (macro!=null)
-			macro.setMark(sel.y);
+			macro.setMark(sel.y, 0);
 	}
 
 	public void selectionChanged(IAction action, ISelection selection) {

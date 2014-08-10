@@ -21,6 +21,8 @@ public class MoveCursorToMark implements IHandler {
 		// TODO Auto-generated method stub
 
 	}
+	
+	protected int mMarkIndex=0;
 
 	public Object execute(ExecutionEvent event) throws ExecutionException
 	{
@@ -28,15 +30,16 @@ public class MoveCursorToMark implements IHandler {
 		if (viewer!=null)
 		{
 			EditorMacro macro=MacroManager.getManager().getCurrentMacro();
+			int markPos=0;
 			if (macro!=null)
 			{
-				int markPos=macro.getMark();
-				viewer.setSelectedRange(markPos, 0);
+				markPos=macro.getMark(mMarkIndex);
 			}
 			else
 			{
-				viewer.setSelectedRange(MacroManager.getManager().getRecordingMark(), 0);
+				markPos=MacroManager.getManager().getRecordingMark(mMarkIndex);
 			}
+			viewer.setSelectedRange(markPos, 0);
 		}
 		return null;
 	}

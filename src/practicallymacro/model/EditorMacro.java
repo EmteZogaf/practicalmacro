@@ -32,7 +32,7 @@ public class EditorMacro {
 	private String mDescription;
 	private String mID;
 	private long mLastUse;
-	private int mMark=0;
+	private int[] mMarks=new int[]{0, 0}; //make array length match number of marks 
 	private boolean mIsContributed;
 	private int mSessionID=0;
 	private boolean mRunAsCompoundEvent;
@@ -77,6 +77,7 @@ public class EditorMacro {
 			return;
 		}
 		
+		clearMarks();
 		boolean debugMode=MacroManager.getManager().isMacroDebugMode();
 		boolean saveWriteMode=Activator.getDefault().getPreferenceStore().getBoolean(Initializer.Pref_WriteToMacroConsole);
 		if (debugMode)
@@ -286,6 +287,14 @@ public class EditorMacro {
 		}
 		
 	}
+	
+	private void clearMarks()
+	{
+		for (int i=0; i<mMarks.length; i++)
+		{
+			mMarks[i]=0;
+		}
+	}
 
 	private void translate(ISourceViewer viewer, int offset, Point textPos)
 	{
@@ -441,14 +450,19 @@ public class EditorMacro {
 		return getID().hashCode();
 	}
 	
-	public void setMark(int caretOffset)
+	public void setMark(int caretOffset, int markIndex)
 	{
-		mMark=caretOffset;
+		if (markIndex<mMarks.length)
+			mMarks[markIndex]=caretOffset;
 	}
 
 	public void moveMarkOnInsert(int loc, int length)
 	{
-		mMark=moveMarkOnInsert(mMark, loc, length);
+		for (int i=0; i<mMarks.length; i++)
+		{
+			mMarks[i]=moveMarkOnInsert(mMarks[i], loc, length);
+		}
+//		mMark=moveMarkOnInsert(mMark, loc, length);
 	}
 	
 	public static int moveMarkOnInsert(int initialMark, int loc, int length)
@@ -460,7 +474,11 @@ public class EditorMacro {
 	
 	public void moveMarkOnDelete(int start, int length)
 	{
-		mMark=moveMarkOnDelete(mMark, start, length);
+		for (int i=0; i<mMarks.length; i++)
+		{
+			mMarks[i]=moveMarkOnDelete(mMarks[i], start, length);
+		}
+//		mMark=moveMarkOnDelete(mMark, start, length);
 	}
 
 	public static int moveMarkOnDelete(int mark, int start, int length)
@@ -472,9 +490,11 @@ public class EditorMacro {
 		return mark;
 	}
 	
-	public int getMark()
+	public int getMark(int index)
 	{
-		return mMark;
+		if (index<mMarks.length)
+			return mMarks[index];
+		return 0;
 	}
 
 	static class FlattenWrapper

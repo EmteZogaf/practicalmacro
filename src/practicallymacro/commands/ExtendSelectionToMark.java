@@ -12,7 +12,7 @@ import practicallymacro.util.Utilities;
 
 public class ExtendSelectionToMark implements IHandler
 {
-
+	protected int mMarkIndex=0;
 	public void addHandlerListener(IHandlerListener handlerListener) {
 		// TODO Auto-generated method stub
 
@@ -25,24 +25,27 @@ public class ExtendSelectionToMark implements IHandler
 
 	public Object execute(ExecutionEvent event) throws ExecutionException
 	{
+		//NOTE: this selects from the current caret position to the mark.  Really, it should
+		//select from the current selection anchor so that it would be an actual extension of
+		//the selection.
 		ISourceViewer viewer=Utilities.getSourceViewer(Utilities.getActiveEditor());
 		if (viewer!=null)
 		{
 			int markPos=(-1);
 			EditorMacro macro=MacroManager.getManager().getCurrentMacro();
-			int caretPos=Utilities.getCaretPos(Utilities.getActiveEditor());
+			int anchorPos=Utilities.getSelectionAnchor(Utilities.getActiveEditor());
 			if (macro!=null)
 			{
-				markPos=macro.getMark();
+				markPos=macro.getMark(mMarkIndex);
 			}
 			else
 			{
-				markPos=MacroManager.getManager().getRecordingMark();
+				markPos=MacroManager.getManager().getRecordingMark(mMarkIndex);
 			}
 			
 			if (markPos>=0)
 			{
-				viewer.setSelectedRange(caretPos, markPos-caretPos);
+				viewer.setSelectedRange(anchorPos, markPos-anchorPos);
 			}			
 		}
 		

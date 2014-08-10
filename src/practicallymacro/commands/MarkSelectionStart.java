@@ -21,6 +21,8 @@ public class MarkSelectionStart implements IHandler {
 		// TODO Auto-generated method stub
 
 	}
+	
+	protected int mMarkIndex=0;
 
 	public Object execute(ExecutionEvent event) throws ExecutionException
 	{
@@ -31,11 +33,11 @@ public class MarkSelectionStart implements IHandler {
 			EditorMacro macro=MacroManager.getManager().getCurrentMacro();
 			if (macro!=null)
 			{
-				macro.setMark(markPos);
+				macro.setMark(markPos, mMarkIndex);
 			}
 			else
 			{
-				MacroManager.getManager().setRecordingMark(markPos);
+				MacroManager.getManager().setRecordingMark(markPos, mMarkIndex);
 			}
 		}
 		

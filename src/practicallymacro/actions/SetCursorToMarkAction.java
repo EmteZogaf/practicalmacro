@@ -12,6 +12,11 @@ import practicallymacro.model.MacroManager;
 import practicallymacro.util.Utilities;
 
 
+/**
+ * I don't think this is used anymore.
+ * @deprecated
+ *
+ */
 public class SetCursorToMarkAction extends Action implements
 		IWorkbenchWindowActionDelegate {
 
@@ -38,7 +43,7 @@ public class SetCursorToMarkAction extends Action implements
 			EditorMacro macro=MacroManager.getManager().getCurrentMacro();
 			if (macro!=null)
 			{
-				int markPos=macro.getMark();
+				int markPos=macro.getMark(0);
 				viewer.setSelectedRange(markPos, 0);
 			}
 		}
