@@ -214,7 +214,7 @@ public class EditorMacro {
 							{
 								//patch my list of commands with the proper info
 								ISourceViewer sourceViewer=Utilities.getSourceViewer(editor);
-								Point selRange=sourceViewer.getSelectedRange();
+								Point selRange=Utilities.getUndirectedSelection(sourceViewer);
 								int caretPos=Utilities.getCaretPos(editor);
 								Point cursorPos=new Point(0,0);
 								Point selEndPos=new Point(0,0);
