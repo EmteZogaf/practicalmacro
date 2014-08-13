@@ -237,6 +237,16 @@ public class EditorMacro {
 								MacroCommandDebugInfo newInfo=new MacroCommandDebugInfo(command, cursorPos, selEndPos);
 								collectedDebugInfo.add(newInfo);
 								MacroConsole.getConsole().writeln("--After command, cursor at: Line "+cursorPos.x+", Column "+cursorPos.y, MacroConsole.Type_DebugInfo);
+								
+								//write out the mark positions
+								for (int k=0; k<mMarks.length; k++)
+								{
+									int markPos=mMarks[k];
+									Point p=new Point(0, 0);
+									translate(sourceViewer, markPos, p);
+									MacroConsole.getConsole().writeln("--After command, mark#"+Integer.toString(k)+" at: Line "+p.x+", Column "+p.y, MacroConsole.Type_DebugInfo);
+								}
+								
 								if (selEndPos==null)
 								{
 									MacroConsole.getConsole().writeln("--After command, there is no selection", MacroConsole.Type_DebugInfo);
@@ -467,7 +477,8 @@ public class EditorMacro {
 	
 	public static int moveMarkOnInsert(int initialMark, int loc, int length)
 	{
-		if (loc<=initialMark)
+		//changing so that insert at mark doesn't change mark (since conceptually a text position at the same position as the mark is after the mark).
+		if (loc<initialMark)
 			return initialMark+length;
 		return initialMark;
 	}
