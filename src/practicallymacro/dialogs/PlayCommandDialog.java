@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.eclipse.core.commands.Command;
+import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -25,6 +26,8 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.commands.ICommandService;
+import org.osgi.service.prefs.BackingStoreException;
+import org.osgi.service.prefs.Preferences;
 
 import practicallymacro.commands.EclipseCommand;
 import practicallymacro.commands.IMacroCommand;
@@ -50,6 +53,9 @@ public class PlayCommandDialog extends Dialog
 		super(shell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
 	}
+	
+	private static String Key_filterNonEditor="filterNonEditor";
+	private static String Key_filterNonMacro="filterNonMacro";
 
 	@Override
 	protected Control createDialogArea(Composite parent)
@@ -67,9 +73,10 @@ public class PlayCommandDialog extends Dialog
 			public void widgetSelected(SelectionEvent e)
 			{
 				updateCommandTable();
+				updatePref(Key_filterNonEditor, mFilterNonEditorCommands.getSelection());
 			}
 		});
-		mFilterNonEditorCommands.setSelection(true);
+		mFilterNonEditorCommands.setSelection(getPref(Key_filterNonEditor));
 		
 		mFilterNonMacroCommands=new Button(comp, SWT.CHECK);
 		GridData gd=new GridData();
@@ -82,9 +89,10 @@ public class PlayCommandDialog extends Dialog
 			public void widgetSelected(SelectionEvent e)
 			{
 				updateCommandTable();
+				updatePref(Key_filterNonMacro, mFilterNonMacroCommands.getSelection());
 			}
 		});
-
+		mFilterNonMacroCommands.setSelection(getPref(Key_filterNonMacro));
 		
 		mCommandTable=new Table(comp, SWT.BORDER | SWT.SINGLE| SWT.FULL_SELECTION);
 		mCommandTable.setHeaderVisible(true);
@@ -146,6 +154,7 @@ public class PlayCommandDialog extends Dialog
 		l.setText("Number of times to execute command");
 		mCountSpinner=new Spinner(spinComp, SWT.BORDER);
 		mCountSpinner.setMinimum(1);
+		mCountSpinner.setMaximum(10000);
 		mCountSpinner.setSelection(0);
 		
 //		mCommands=new ArrayList<IMacroCommand>();
@@ -153,6 +162,24 @@ public class PlayCommandDialog extends Dialog
 		updateCommandTable();
 		
 		return comp;
+	}
+	
+	private boolean getPref(String prefKey)
+	{
+		Preferences preferences = ConfigurationScope.INSTANCE.getNode("practicallMacro.preferences");
+		return preferences.getBoolean(prefKey, false);
+	}
+	
+	private void updatePref(String prefKey, boolean value)
+	{
+		Preferences preferences = ConfigurationScope.INSTANCE.getNode("practicallMacro.preferences");
+		preferences.putBoolean(prefKey, value);
+		try {
+			// forces the application to save the preferences
+			preferences.flush();
+		} catch (BackingStoreException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
